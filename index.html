@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#08081A"/>
 <title>Sol's RNG 2D</title>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <link rel="manifest" href="manifest.json"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
@@ -138,12 +139,12 @@ canvas{display:block;position:fixed;top:0;left:0;}
 //  SUPABASE AUTH
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const SUPABASE_URL="https://nuesftiqwqrlofiexhmz.supabase.co";
-const SUPABASE_KEY="sb_publishable_ZdyOEsn8LFSBFPTDNHvB4Q_SDomzMDZ";
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZXNmdGlxd3FybG9maWV4aG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTIxNjIsImV4cCI6MjA4OTQ4ODE2Mn0.Of6JQNGHtVqZAmYQEowT_u9OTBi25o-jAOo8yeE85bs";
 let sbClient=null,sbUser=null;
 
 function initSupabase(){
   try{
-    sbClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    sbClient=(window.supabase||supabase).createClient(SUPABASE_URL,SUPABASE_KEY);
     sbClient.auth.onAuthStateChange((event,session)=>{
       sbUser=session?.user||null;
       updateAuthUI();
