@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#08081A"/>
 <title>Sol's RNG 2D</title>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+
 <link rel="manifest" href="manifest.json"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
@@ -144,7 +144,13 @@ let sbClient=null,sbUser=null;
 
 function initSupabase(){
   try{
-    sbClient=(window.supabase||supabase).createClient(SUPABASE_URL,SUPABASE_KEY);
+    const sb=window.supabase||window.Supabase;
+    if(!sb){
+      console.error("Supabase library not loaded");
+      setTimeout(initSupabase,1000); // retry after 1s
+      return;
+    }
+    sbClient=sb.createClient(SUPABASE_URL,SUPABASE_KEY);
     sbClient.auth.onAuthStateChange((event,session)=>{
       sbUser=session?.user||null;
       updateAuthUI();
@@ -156,7 +162,11 @@ function initSupabase(){
       updateAuthUI();
       if(sbUser) loadCloudSave();
     });
-  }catch(e){console.warn("Supabase not configured:",e.message);}
+    console.log("✓ Supabase connected");
+  }catch(e){
+    console.error("Supabase init error:",e.message);
+    toast("❌ Auth error: "+e.message);
+  }
 }
 
 async function authSignUp(email,password){
@@ -4088,5 +4098,6 @@ document.addEventListener("pointerdown",_startMusic);
 document.addEventListener("keydown",_startMusic);
 
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 </body>
 </html>
