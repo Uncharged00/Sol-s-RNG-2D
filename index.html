@@ -192,8 +192,8 @@ async function authSignOut(){
   updateAuthUI();
 }
 
-async function saveCloudSave(){
-  if(!sbClient||!sbUser) return toast("❌ Not signed in");
+async function saveCloudSave(silent=false){
+  if(!sbClient||!sbUser){ if(!silent) toast("❌ Not signed in"); return; }
   const d=JSON.stringify({
     coins:S.coins,rolls:S.rolls,owned_auras:S.owned_auras,owned_items:S.owned_items,
     owned_gears:S.owned_gears,owned_talismans:S.owned_talismans,
@@ -205,8 +205,15 @@ async function saveCloudSave(){
     autoDelete:S.autoDelete,autoEquip:S.autoEquip,talisman_stacks:S.talisman_stacks,
   });
   const {error}=await sbClient.from("saves").upsert({user_id:sbUser.id,save_data:d,updated_at:new Date().toISOString()},{onConflict:"user_id"});
-  if(error) toast("❌ Cloud save failed: "+error.message);
-  else toast("☁️ Progress saved to cloud!");
+  if(error){ if(!silent) toast("❌ Cloud save failed: "+error.message); }
+  else {
+    if(!silent) toast("☁️ Progress saved to cloud!");
+    else {
+      // Subtle flash on coins box for auto-save
+      const hc=document.getElementById("hud-coins");
+      if(hc){ hc.style.color="#60e880"; setTimeout(()=>hc.style.color="",800); }
+    }
+  }
 }
 
 async function loadCloudSave(){
@@ -1614,7 +1621,16 @@ function openChest(type){
 
 // ── Passive drops every minute ────────────────────────────────────
 let passiveDropTimer=0;
+let cloudSaveTimer=0;
 function tickPassiveDrops(dt){
+  // Cloud auto-save every 60 seconds if signed in
+  if(sbUser && sbClient){
+    cloudSaveTimer+=dt;
+    if(cloudSaveTimer>=60000){
+      cloudSaveTimer=0;
+      saveCloudSave(true); // silent=true, no toast
+    }
+  }
   passiveDropTimer+=dt;
   if(passiveDropTimer>=60000){
     passiveDropTimer=0;
@@ -3560,7 +3576,9 @@ function addChatEntry(name, chance, col, glow, tier){
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  INIT
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-load();updateHUD();updateBiomeBar();updateEquippedBadge();initDayNight();updateCompanion();initSupabase();
+load();updateHUD();updateBiomeBar();updateEquippedBadge();initDayNight();updateCompanion();
+  // initSupabase will auto-load cloud save if already signed in
+  initSupabase();
 requestAnimationFrame(loop);
 // Start background worker — keeps rolling even when tab is hidden
 startBgWorker();
