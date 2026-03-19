@@ -2739,6 +2739,11 @@ function gameTick(){
     if(!document.hidden) updateHUD();
   }
 
+  // ── Timers always run regardless of autoRoll ──
+  tickBiome(dt);
+  tickPassiveDrops(dt);
+  tickDayNight(dt);
+
   // Roll cooldown
   if(S.rollCooldown>0) S.rollCooldown=Math.max(0, S.rollCooldown-dt);
 
@@ -2754,10 +2759,6 @@ function gameTick(){
       S.rollCooldown=S.rollInterval;
     }
   }
-
-  tickBiome(dt);
-  tickPassiveDrops(dt);
-  tickDayNight(dt);
 }
 
 // Called from endCutscene/endStarCutscene — fires next roll immediately
