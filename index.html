@@ -140,7 +140,7 @@ canvas{display:block;position:fixed;top:0;left:0;}
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const SUPABASE_URL="https://nuesftiqwqrlofiexhmz.supabase.co";
 const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZXNmdGlxd3FybG9maWV4aG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTIxNjIsImV4cCI6MjA4OTQ4ODE2Mn0.Of6JQNGHtVqZAmYQEowT_u9OTBi25o-jAOo8yeE85bs";
-let sbClient=null,sbUser=null;
+let sbClient=null,sbUser=null,sbLoadedOnce=false;
 
 function initSupabase(){
   try{
@@ -154,13 +154,22 @@ function initSupabase(){
     sbClient.auth.onAuthStateChange((event,session)=>{
       sbUser=session?.user||null;
       updateAuthUI();
-      if(event==="SIGNED_IN"){loadCloudSave();toast("☁️ Signed in as "+sbUser.email);}
-      if(event==="SIGNED_OUT") toast("👋 Signed out");
+      // Only load on explicit sign-in, never on token refresh or focus
+      if(event==="SIGNED_IN"&&!sbLoadedOnce){
+        sbLoadedOnce=true;
+        loadCloudSave();
+        toast("☁️ Signed in as "+sbUser.email);
+      }
+      if(event==="SIGNED_OUT"){sbLoadedOnce=false;toast("👋 Signed out");}
     });
     sbClient.auth.getSession().then(({data:{session}})=>{
       sbUser=session?.user||null;
       updateAuthUI();
-      if(sbUser) loadCloudSave();
+      // Load once on startup if already signed in
+      if(sbUser&&!sbLoadedOnce){
+        sbLoadedOnce=true;
+        loadCloudSave();
+      }
     });
     console.log("✓ Supabase connected");
   }catch(e){
@@ -2319,6 +2328,110 @@ function renderTabBar(tabs,onSwitch){
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  GLOVE DISPLAY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawGlove(ctx, x, y, size, col, isLeft, squeeze){
+  ctx.save();
+  ctx.translate(x, y);
+  if(isLeft) ctx.scale(-1,1); // mirror for left glove
+
+  // Slight squeeze toward orb
+  const sq=squeeze*0.12;
+  ctx.translate(sq*size, 0);
+
+  // Wrist/cuff
+  ctx.beginPath();
+  const _rr1=size*0.1;const _rx=-size*0.25,_ry=size*0.15,_rw=size*0.5,_rh=size*0.45;
+  ctx.moveTo(_rx+_rr1,_ry);ctx.lineTo(_rx+_rw-_rr1,_ry);ctx.arcTo(_rx+_rw,_ry,_rx+_rw,_ry+_rr1,_rr1);
+  ctx.lineTo(_rx+_rw,_ry+_rh-_rr1);ctx.arcTo(_rx+_rw,_ry+_rh,_rx+_rw-_rr1,_ry+_rh,_rr1);
+  ctx.lineTo(_rx+_rr1,_ry+_rh);ctx.arcTo(_rx,_ry+_rh,_rx,_ry+_rh-_rr1,_rr1);
+  ctx.lineTo(_rx,_ry+_rr1);ctx.arcTo(_rx,_ry,_rx+_rr1,_ry,_rr1);ctx.closePath();
+  ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.55)`;
+  ctx.fill();
+  ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},0.8)`;
+  ctx.lineWidth=1.5; ctx.stroke();
+
+  // Palm
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size*0.28, size*0.35, 0, 0, Math.PI*2);
+  ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.6)`;
+  ctx.fill(); ctx.stroke();
+
+  // Fingers (4 fingers)
+  const fingers=[{x:-0.18,a:-0.3},{x:-0.06,a:-0.1},{x:0.06,a:0.1},{x:0.18,a:0.3}];
+  fingers.forEach(f=>{
+    ctx.save();
+    ctx.translate(f.x*size, -size*0.28);
+    ctx.rotate(f.a);
+    ctx.beginPath();
+    const _fr=size*0.06,_fx=-size*0.065,_fy=-size*0.28,_fw=size*0.13,_fh=size*0.3;
+    ctx.moveTo(_fx+_fr,_fy);ctx.lineTo(_fx+_fw-_fr,_fy);ctx.arcTo(_fx+_fw,_fy,_fx+_fw,_fy+_fr,_fr);
+    ctx.lineTo(_fx+_fw,_fy+_fh-_fr);ctx.arcTo(_fx+_fw,_fy+_fh,_fx+_fw-_fr,_fy+_fh,_fr);
+    ctx.lineTo(_fx+_fr,_fy+_fh);ctx.arcTo(_fx,_fy+_fh,_fx,_fy+_fh-_fr,_fr);
+    ctx.lineTo(_fx,_fy+_fr);ctx.arcTo(_fx,_fy,_fx+_fr,_fy,_fr);ctx.closePath();
+    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.6)`;
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+
+  // Thumb
+  ctx.save();
+  ctx.translate(-size*0.28, -size*0.05);
+  ctx.rotate(-0.6);
+  ctx.beginPath();
+  const _tr=size*0.06,_tx=-size*0.065,_ty=-size*0.18,_tw=size*0.13,_th=size*0.22;
+  ctx.moveTo(_tx+_tr,_ty);ctx.lineTo(_tx+_tw-_tr,_ty);ctx.arcTo(_tx+_tw,_ty,_tx+_tw,_ty+_tr,_tr);
+  ctx.lineTo(_tx+_tw,_ty+_th-_tr);ctx.arcTo(_tx+_tw,_ty+_th,_tx+_tw-_tr,_ty+_th,_tr);
+  ctx.lineTo(_tx+_tr,_ty+_th);ctx.arcTo(_tx,_ty+_th,_tx,_ty+_th-_tr,_tr);
+  ctx.lineTo(_tx,_ty+_tr);ctx.arcTo(_tx,_ty,_tx+_tr,_ty,_tr);ctx.closePath();
+  ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.6)`;
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  // Knuckle lines
+  ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},0.3)`;
+  ctx.lineWidth=1;
+  for(let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.moveTo(-size*0.15+i*size*0.15,-size*0.05);
+    ctx.lineTo(-size*0.15+i*size*0.15,size*0.05);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Color map for each gear
+const GEAR_COLORS={
+  "Luck Glove":[40,160,40],"Desire Glove":[80,180,80],"Solar Device":[255,180,0],
+  "Lunar Device":[160,160,255],"Shining Star":[255,240,100],"Eclipse Device":[255,140,0],
+  "Exo Gauntlet":[0,200,160],"Jackpot Gauntlet":[255,215,0],"Frozen Gauntlet":[160,220,255],
+  "Windstorm Device":[180,210,255],"Subzero Device":[100,200,255],"Galactic Device":[80,0,200],
+  "Volcanic Device":[255,80,0],"Exoflex Device":[0,255,160],"Hologrammer":[0,200,255],
+  "Ragnaröker":[200,0,100],"Starshaper":[255,220,80],"Neuralyzer":[0,255,200],
+  "Genesis Drive":[255,255,255],"Heavenly Device":[255,240,160],
+  "Jackpot Gauntlet (L)":[255,215,0],"Gemstone Gauntlet":[100,200,200],
+  "Tide Gauntlet":[0,160,220],"Flesh Device":[200,80,80],
+  "Blessed Tide Gauntlet":[0,200,255],"Gravitational Device":[100,0,255],
+};
+
+function drawGloves(ctx, cx, cy, r, ts){
+  if(!S.lastAura) return;
+  const squeeze=Math.sin(ts*2.5)*0.3+0.5; // breathing squeeze toward orb
+  const size=r*0.65;
+  const offset=r*1.55;
+
+  if(S.equipped_R){
+    const col=GEAR_COLORS[S.equipped_R]||[200,200,200];
+    drawGlove(ctx, cx+offset, cy, size, col, false, squeeze);
+  }
+  if(S.equipped_L){
+    const col=GEAR_COLORS[S.equipped_L]||[160,160,255];
+    drawGlove(ctx, cx-offset, cy, size, col, true, squeeze);
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  UNIQUE AURA EFFECTS  (drawn on main canvas)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Each effect receives (ctx, cx, cy, r, ts) and draws extra visuals around the orb
@@ -2688,6 +2801,8 @@ function draw(t){
     lines.forEach((l,i)=>bgX.fillText(l,cx,startY+i*lh));
     bgX.shadowBlur=0;bgX.restore();
     // Unique aura effect
+    // Draw equipped gloves on sides of orb (behind aura effects)
+    drawGloves(bgX,cx,cy,r,ts);
     drawAuraEffect(bgX,name,cx,cy,r,ts);
   }
   // cooldown bar handled by visual loop
@@ -2853,6 +2968,27 @@ function loop(ts){
   last=ts;
 
   if(!document.hidden){
+    // Day/night tick in visual loop too (ensures it runs even without rolling)
+    const _now2=performance.now();
+    if(typeof _lastDayTick==='undefined') window._lastDayTick=_now2;
+    const _dayDt=(_now2-window._lastDayTick)/1000;
+    window._lastDayTick=_now2;
+    if(_dayDt<2){ // sanity cap
+      S.dayNightTimer-=_dayDt;
+      if(S.dayNightTimer<=0){S.isDay=!S.isDay;S.dayNightTimer=150;if(!document.hidden)toast(S.isDay?'☀️ Daytime!':'🌙 Nighttime!');}
+      // Also tick potion timers
+      S.active_potions=S.active_potions.filter(p=>{
+        if(p.rollsLeft!==undefined)return true;
+        p.timer-=_dayDt*1000;
+        if(p.timer<=0){toast('🧪 '+p.name+' wore off');return false;}
+        return true;
+      });
+      // Biome timer
+      if(S.biomeIdx>0){
+        S.biomeTimer-=_dayDt;
+        if(S.biomeTimer<=0){S.biomeIdx=0;updateBiomeBar();}
+      }
+    }
     const _tb=document.getElementById('time-bar');if(_tb)_tb.textContent=(S.isDay?'☀️ DAY ':'🌙 NIGHT ')+Math.ceil(S.dayNightTimer||0)+'s';
     // Update biome bar timer live every frame
     if(S.biomeIdx>0){const _bb=document.getElementById('biome-bar');const _bm=BIOMES[S.biomeIdx];if(_bb)_bb.textContent=_bm.emoji+' '+_bm.name+' · '+Math.ceil(S.biomeTimer)+'s';}
@@ -2928,6 +3064,42 @@ function updateBuffTray(){
     "<span class='buff-timer' style='color:"+(isDay?"#ffd700":"#8888ff")+"'>"+timeRem+"s</span>"+
     "</div>";
   tray.appendChild(timeDiv);
+
+  // Equipped glove buffs
+  const gearBuffs=[];
+  if(S.equipped_R){
+    const g=GEARS.find(x=>x.name===S.equipped_R);
+    if(g&&(g.luck_add||g.speed_add)){
+      const parts=[];
+      if(g.luck_add) parts.push('+'+g.luck_add+'% luck');
+      if(g.speed_add>0) parts.push('+'+g.speed_add+'% spd');
+      if(g.speed_add<0) parts.push(g.speed_add+'% spd');
+      const div=document.createElement("div");
+      div.className="buff-icon";
+      div.style.borderColor="rgba(255,215,0,0.35)";
+      div.innerHTML="<span class='buff-emoji'>🧤</span>"+
+        "<div class='buff-info'>"+
+        "<span class='buff-name' style='color:#ccc'>"+g.name.replace(" Device","").replace(" Gauntlet","").replace(" Glove","")+"</span>"+
+        "<span class='buff-timer' style='color:#ffd700'>"+parts.join(' ')+"</span>"+
+        "</div>";
+      tray.appendChild(div);
+    }
+  }
+  if(S.equipped_L){
+    const g=GEARS.find(x=>x.name===S.equipped_L);
+    if(g){
+      const desc=g.effect||g.name;
+      const div=document.createElement("div");
+      div.className="buff-icon";
+      div.style.borderColor="rgba(180,100,255,0.35)";
+      div.innerHTML="<span class='buff-emoji'>🫱</span>"+
+        "<div class='buff-info'>"+
+        "<span class='buff-name' style='color:#ccc'>"+g.name.replace(" Device","").replace(" Gauntlet","").replace(" (L)","")+"</span>"+
+        "<span class='buff-timer' style='color:#c080ff'>"+desc.split('.')[0]+"</span>"+
+        "</div>";
+      tray.appendChild(div);
+    }
+  }
 
   // Active potions
   const POTION_EMOJIS={
