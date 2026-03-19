@@ -140,7 +140,7 @@ canvas{display:block;position:fixed;top:0;left:0;}
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const SUPABASE_URL="https://nuesftiqwqrlofiexhmz.supabase.co";
 const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZXNmdGlxd3FybG9maWV4aG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTIxNjIsImV4cCI6MjA4OTQ4ODE2Mn0.Of6JQNGHtVqZAmYQEowT_u9OTBi25o-jAOo8yeE85bs";
-let sbClient=null,sbUser=null,sbLoadedOnce=false;
+let sbClient=null,sbUser=null,sbLoadedOnce=false,_sbJustSignedIn=false;
 
 function initSupabase(){
   try{
@@ -154,13 +154,15 @@ function initSupabase(){
     sbClient.auth.onAuthStateChange((event,session)=>{
       sbUser=session?.user||null;
       updateAuthUI();
-      // Only load on explicit sign-in, never on token refresh or focus
-      if(event==="SIGNED_IN"&&!sbLoadedOnce){
+      // TOKEN_REFRESHED / INITIAL_SESSION / USER_UPDATED all fire on foreground — ignore them
+      // Only act on explicit password sign-in
+      if(event==="SIGNED_IN"&&!sbLoadedOnce&&_sbJustSignedIn){
+        _sbJustSignedIn=false;
         sbLoadedOnce=true;
         loadCloudSave();
         toast("☁️ Signed in as "+sbUser.email);
       }
-      if(event==="SIGNED_OUT"){sbLoadedOnce=false;toast("👋 Signed out");}
+      if(event==="SIGNED_OUT"){sbLoadedOnce=false;_sbJustSignedIn=false;toast("👋 Signed out");}
     });
     sbClient.auth.getSession().then(({data:{session}})=>{
       sbUser=session?.user||null;
@@ -190,8 +192,9 @@ function _doSignUp(){const e=document.getElementById("auth-email"),p=document.ge
 
 async function authSignIn(email,password){
   if(!sbClient) return toast("❌ Supabase not configured");
+  _sbJustSignedIn=true; // flag so onAuthStateChange knows this is a real sign-in
   const {error}=await sbClient.auth.signInWithPassword({email,password});
-  if(error) toast("❌ "+error.message);
+  if(error){_sbJustSignedIn=false;toast("❌ "+error.message);}
   else{document.getElementById("overlay").classList.remove("open");}
 }
 
