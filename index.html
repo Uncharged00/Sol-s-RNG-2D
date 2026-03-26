@@ -440,7 +440,7 @@ const GEARS=[
   {name:"Flesh Device",          hand:"L",tier:"T5",bonus_mult:1.3, every_bonus:true, luck_add:0, speed_add:0,coin_mult:1.0, color:[200,80,80],   cost:80000,   effect:"Every roll is a Bonus Roll (×1.3)"},
   {name:"Blessed Tide Gauntlet", hand:"L",tier:"T5",bonus_mult:2,   every_bonus:false,luck_add:120,speed_add:10,coin_mult:1.0,color:[0,200,255],  cost:200000,  effect:"+120% Luck, every 6th roll = Starfall"},
   {name:"Gravitational Device",  hand:"L",tier:"T8",bonus_mult:6,   every_bonus:false,luck_add:0, speed_add:0,coin_mult:1.0, color:[100,0,255],   cost:500000,  effect:"Bonus Roll Multiplier: ×6"},
-  {name:"Pole Light Core Device",hand:"L",tier:"T9",bonus_mult:0,every_bonus:false,luck_add:500,speed_add:0,coin_mult:1.0,color:[0,180,255],cost:0,effect:"+500% Luck, every 30th roll 5x Polar Shift stacks"},,
+  {name:"Pole Light Core Device",hand:"L",tier:"T9",bonus_mult:0,every_bonus:false,luck_add:500,speed_add:0,coin_mult:1.0,color:[0,180,255],cost:0,effect:"+500% Luck, every 30th roll 5x Polar Shift stacks"},
 ];
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -645,7 +645,7 @@ const S={
   rollCooldown:0, rollInterval:60,
   particles:[],
   lastAura:null,
-  autoRoll:false,
+  autoRoll:true,
   bonusRollCtr:0,
   owned_auras:{},
   owned_items:{},        // lucky potions, gear basings, crafted potions
@@ -756,7 +756,7 @@ function spawnParticles(col,glow,tier){
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function calcLuck(){
   let base=100;
-  if(S.equipped_R){const g=GEARS.find(x=>x.name===S.equipped_R);if(g)base+=g.luck_add||0;}
+  if(S.equipped_R){const g=GEARS.find(x=>x&&x.name===S.equipped_R);if(g)base+=g.luck_add||0;}
   // Talisman
   if(S.equipped_talisman){
     const tal=TALISMANS.find(t=>t.name===S.equipped_talisman);
@@ -781,7 +781,7 @@ function calcLuck(){
 function calcSpeedBonus(){
   // Returns total speed reduction % (positive = faster)
   let spd=0;
-  if(S.equipped_R){const g=GEARS.find(x=>x.name===S.equipped_R);if(g)spd+=g.speed_add||0;}
+  if(S.equipped_R){const g=GEARS.find(x=>x&&x.name===S.equipped_R);if(g)spd+=g.speed_add||0;}
   S.active_potions.forEach(p=>{ if(p.speed_add) spd+=p.speed_add; });
   return spd;
 }
@@ -822,7 +822,7 @@ function doRoll(){
 
   // coin mult
   let coinMult=1;
-  [S.equipped_R,S.equipped_L].forEach(n=>{if(!n)return;const g=GEARS.find(x=>x.name===n);if(g&&g.coin_mult)coinMult=Math.max(coinMult,g.coin_mult);});
+  [S.equipped_R,S.equipped_L].forEach(n=>{if(!n)return;const g=GEARS.find(x=>x&&x.name===n);if(g&&g.coin_mult)coinMult=Math.max(coinMult,g.coin_mult);});
 
   // eligible auras — biome exclusive auras get weight boosted by biome.mult
   const biomeMult=BIOMES[S.biomeIdx].mult;
@@ -1857,7 +1857,7 @@ function renderCraftItems(){
       } else if(shopTab===0){
         // gear
         S.owned_gears[name]=true;
-        const gearDef=GEARS.find(g=>g.name===name);
+        const gearDef=GEARS.find(g=>g&&g.name===name);
         if(gearDef){gearDef.hand==="R"?S.equipped_R=name:S.equipped_L=name;}
         if(name==="Gear Basing"){S.owned_items["Gear Basing"]=(S.owned_items["Gear Basing"]||0)+1;}
         toast(`✅ Crafted: ${name}!`);
@@ -2150,7 +2150,7 @@ function renderInventoryTab(){
       c.appendChild(banner);
 
       const ownedGears=Object.keys(S.owned_gears).filter(n=>{
-        const g=GEARS.find(x=>x.name===n); return g&&g.hand===slot.hand;
+        const g=GEARS.find(x=>x&&x.name===n); return g&&g.hand===slot.hand;
       });
       if(!ownedGears.length){
         const empty=document.createElement("div");
@@ -2159,7 +2159,7 @@ function renderInventoryTab(){
         c.appendChild(empty);
       }
       ownedGears.forEach(gname=>{
-        const gdef=GEARS.find(x=>x.name===gname);
+        const gdef=GEARS.find(x=>x&&x.name===gname);
         const eq=S[slot.key]===gname;
         const card=document.createElement("div");card.className="card";
         card.style.borderColor=rgba(gdef?gdef.color:[200,200,200],eq?0.8:0.3);
@@ -3402,7 +3402,7 @@ function doBgRoll(){
   let coinMult=1;
   [S.equipped_R,S.equipped_L].forEach(n=>{
     if(!n)return;
-    const g=GEARS.find(x=>x.name===n);
+    const g=GEARS.find(x=>x&&x.name===n);
     if(g&&g.coin_mult) coinMult=Math.max(coinMult,g.coin_mult);
   });
 
@@ -3570,7 +3570,7 @@ function updateBuffTray(){
   // Equipped glove buffs
   const gearBuffs=[];
   if(S.equipped_R){
-    const g=GEARS.find(x=>x.name===S.equipped_R);
+    const g=GEARS.find(x=>x&&x.name===S.equipped_R);
     if(g&&(g.luck_add||g.speed_add)){
       const parts=[];
       if(g.luck_add) parts.push('+'+g.luck_add+'% luck');
@@ -3588,7 +3588,7 @@ function updateBuffTray(){
     }
   }
   if(S.equipped_L){
-    const g=GEARS.find(x=>x.name===S.equipped_L);
+    const g=GEARS.find(x=>x&&x.name===S.equipped_L);
     if(g){
       const desc=g.effect||g.name;
       const div=document.createElement("div");
@@ -4374,7 +4374,11 @@ function addChatEntry(name, chance, col, glow, tier){
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  INIT
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-load();updateHUD();updateBiomeBar();updateEquippedBadge();initDayNight();updateCompanion();
+load();
+  // Clear equipped gears that no longer exist
+  if(S.equipped_R && !GEARS.find(g=>g&&g.name===S.equipped_R)) S.equipped_R=null;
+  if(S.equipped_L && !GEARS.find(g=>g&&g.name===S.equipped_L)) S.equipped_L=null;
+  updateHUD();updateBiomeBar();updateEquippedBadge();initDayNight();updateCompanion();
   // initSupabase will auto-load cloud save if already signed in
   initSupabase();
 requestAnimationFrame(loop);
