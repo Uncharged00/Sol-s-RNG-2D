@@ -1,5 +1,17 @@
-const CACHE = "sols-rng-v3";
-const FILES = ["./index.html", "./manifest.json", "./icon.svg"];
+const CACHE = "sols-rng-v4";
+const FILES = [
+  "./index.html",
+  "./manifest.json",
+  "./icon.svg",
+  "./data.js",
+  "./auth.js",
+  "./state.js",
+  "./merchants.js",
+  "./cutscenes.js",
+  "./draw.js",
+  "./ui.js",
+  "./roll.js"
+];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
