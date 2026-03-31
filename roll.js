@@ -104,7 +104,6 @@ function doRoll(){
   tickMerchant();
   updateHUD();save();
 }
-}
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  LOOT CHESTS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -134,150 +133,13 @@ const CHEST_TABLES={
   Mega:[
     {item:"Fortune III",   w:20,qty:()=>Math.ceil(rnd()*3)},
     {item:"Godly Potion (Zeus)",w:15,qty:()=>1},
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  GLOVE DISPLAY
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function rRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
-  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
-  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
-  ctx.closePath();
-}
-
-function drawGlove(ctx, x, y, size, col, isLeft, squeeze){
-  const r=col[0],g=col[1],b=col[2];
-  const bright=`rgba(${Math.min(255,r+60)},${Math.min(255,g+60)},${Math.min(255,b+60)},1)`;
-  const mid=`rgba(${r},${g},${b},0.85)`;
-  const dark=`rgba(${Math.max(0,r-50)},${Math.max(0,g-50)},${Math.max(0,b-50)},0.9)`;
-  const glow=`rgba(${r},${g},${b},0.25)`;
-
-  ctx.save();
-  ctx.translate(x,y);
-  if(isLeft) ctx.scale(-1,1);
-  ctx.translate(squeeze*size*0.1,0);
-
-  const S=size*1.3; // 30% bigger than before
-
-  // ── Drop shadow / glow behind glove ──────────────────────────
-  ctx.shadowColor=`rgba(${r},${g},${b},0.5)`;
-  ctx.shadowBlur=S*0.4;
-
-  // ── CUFF ─────────────────────────────────────────────────────
-  const cuffGrad=ctx.createLinearGradient(-S*0.3,S*0.18,S*0.3,S*0.6);
-  cuffGrad.addColorStop(0,bright);
-  cuffGrad.addColorStop(0.4,mid);
-  cuffGrad.addColorStop(1,dark);
-  rRect(ctx,-S*0.3,S*0.18,S*0.6,S*0.5,S*0.12);
-  ctx.fillStyle=cuffGrad; ctx.fill();
-  // Cuff highlight band
-  rRect(ctx,-S*0.3,S*0.18,S*0.6,S*0.12,S*0.06);
-  ctx.fillStyle=`rgba(${Math.min(255,r+100)},${Math.min(255,g+100)},${Math.min(255,b+100)},0.5)`;
-  ctx.fill();
-  // Cuff outline
-  rRect(ctx,-S*0.3,S*0.18,S*0.6,S*0.5,S*0.12);
-  ctx.strokeStyle=bright; ctx.lineWidth=1.5; ctx.stroke();
-
-  ctx.shadowBlur=0;
-
-  // ── PALM ──────────────────────────────────────────────────────
-  const palmGrad=ctx.createRadialGradient(-S*0.06,-S*0.06,S*0.02,0,0,S*0.38);
-  palmGrad.addColorStop(0,bright);
-  palmGrad.addColorStop(0.5,mid);
-  palmGrad.addColorStop(1,dark);
-  ctx.beginPath();
-  ctx.ellipse(0,S*0.02,S*0.32,S*0.4,0,0,Math.PI*2);
-  ctx.fillStyle=palmGrad; ctx.fill();
-  ctx.strokeStyle=bright; ctx.lineWidth=1.5; ctx.stroke();
-
-  // Palm inner highlight
-  ctx.beginPath();
-  ctx.ellipse(-S*0.06,-S*0.06,S*0.12,S*0.1,0.3,0,Math.PI*2);
-  ctx.fillStyle=`rgba(${Math.min(255,r+120)},${Math.min(255,g+120)},${Math.min(255,b+120)},0.2)`;
-  ctx.fill();
-
-  // ── FINGERS ───────────────────────────────────────────────────
-  const fDefs=[
-    {ox:-S*0.215,oy:-S*0.3,angle:-0.22,fw:S*0.13,fh:S*0.34},
-    {ox:-S*0.07, oy:-S*0.34,angle:-0.06,fw:S*0.135,fh:S*0.38},
-    {ox: S*0.075,oy:-S*0.33,angle: 0.06,fw:S*0.135,fh:S*0.36},
-    {ox: S*0.215,oy:-S*0.28,angle: 0.22,fw:S*0.13,fh:S*0.32},
-  ];
-  fDefs.forEach((f,i)=>{
-    ctx.save();
-    ctx.translate(f.ox,f.oy);
-    ctx.rotate(f.angle);
-    const fGrad=ctx.createLinearGradient(-f.fw*0.5,-f.fh,f.fw*0.5,0);
-    fGrad.addColorStop(0,bright);
-    fGrad.addColorStop(0.5,mid);
-    fGrad.addColorStop(1,dark);
-    rRect(ctx,-f.fw*0.5,-f.fh,f.fw,f.fh,S*0.07);
-    ctx.fillStyle=fGrad; ctx.fill();
-    ctx.strokeStyle=bright; ctx.lineWidth=1.2; ctx.stroke();
-    // Finger crease lines
-    ctx.strokeStyle=`rgba(${Math.max(0,r-30)},${Math.max(0,g-30)},${Math.max(0,b-30)},0.5)`;
-    ctx.lineWidth=0.8;
-    [-f.fh*0.35,-f.fh*0.65].forEach(cy=>{
-      ctx.beginPath();ctx.moveTo(-f.fw*0.35,cy);ctx.lineTo(f.fw*0.35,cy);ctx.stroke();
-    });
-    ctx.restore();
-  });
-
-  // ── THUMB ────────────────────────────────────────────────────
-  ctx.save();
-  ctx.translate(-S*0.32,-S*0.04);
-  ctx.rotate(-0.55);
-  const tGrad=ctx.createLinearGradient(-S*0.08,-S*0.22,S*0.08,0);
-  tGrad.addColorStop(0,bright); tGrad.addColorStop(1,dark);
-  rRect(ctx,-S*0.075,-S*0.24,S*0.15,S*0.26,S*0.07);
-  ctx.fillStyle=tGrad; ctx.fill();
-  ctx.strokeStyle=bright; ctx.lineWidth=1.2; ctx.stroke();
-  ctx.restore();
-
-  // ── KNUCKLE RIDGES ───────────────────────────────────────────
-  fDefs.forEach((f,i)=>{
-    if(i===3) return;
-    const kx=(fDefs[i].ox+fDefs[i+1].ox)*0.5;
-    ctx.beginPath();
-    ctx.arc(kx,-S*0.28,S*0.04,0,Math.PI*2);
-    ctx.fillStyle=bright; ctx.fill();
-  });
-
-  ctx.restore();
-}
-
-// Color map for each gear
-const GEAR_COLORS={
-  "Luck Glove":[40,160,40],"Desire Glove":[80,180,80],"Solar Device":[255,180,0],
-  "Lunar Device":[160,160,255],"Shining Star":[255,240,100],"Eclipse Device":[255,140,0],
-  "Exo Gauntlet":[0,200,160],"Jackpot Gauntlet":[255,215,0],"Frozen Gauntlet":[160,220,255],
-  "Windstorm Device":[180,210,255],"Subzero Device":[100,200,255],"Galactic Device":[80,0,200],
-  "Volcanic Device":[255,80,0],"Exoflex Device":[0,255,160],"Hologrammer":[0,200,255],
-  "Ragnaröker":[200,0,100],"Starshaper":[255,220,80],"Neuralyzer":[0,255,200],
-  "Genesis Drive":[255,255,255],"Heavenly Device":[255,240,160],
-  "Jackpot Gauntlet (L)":[255,215,0],"Gemstone Gauntlet":[100,200,200],
-  "Tide Gauntlet":[0,160,220],"Flesh Device":[200,80,80],
-  "Blessed Tide Gauntlet":[0,200,255],"Gravitational Device":[100,0,255],
+    {item:"Godly Potion (Poseidon)",w:12,qty:()=>1},
+    {item:"Godly Potion (Hades)",w:12,qty:()=>1},
+    {item:"Potion of Bound",w:4,qty:()=>1},
+    {item:"Warp Potion",w:2,qty:()=>1},
+    {item:"Heavenly Potion",w:1,qty:()=>1},
+  ],
 };
-
-function drawGloves(ctx, cx, cy, r, ts){
-  if(!S.lastAura) return;
-  const squeeze=Math.sin(ts*2.5)*0.3+0.5; // breathing squeeze toward orb
-  const size=r*0.72;
-  const offset=r*1.7;
-
-  if(S.equipped_R){
-    const col=GEAR_COLORS[S.equipped_R]||[200,200,200];
-    drawGlove(ctx, cx+offset, cy, size, col, false, squeeze);
-  }
-  if(S.equipped_L){
-    const col=GEAR_COLORS[S.equipped_L]||[160,160,255];
-    drawGlove(ctx, cx-offset, cy, size, col, true, squeeze);
-  }
-}
-
 
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -520,20 +382,7 @@ document.getElementById("close-overlay").addEventListener("click",()=>{
   const c=document.getElementById("overlay-content");
   c.className="grid";c.style.cssText="";
   document.getElementById("overlay").classList.remove("open");
-});
-
-
-    {item:"Godly Potion (Poseidon)",w:15,qty:()=>1},
-    {item:"Godly Potion (Hades)",w:15,qty:()=>1},
-    {item:"Potion of Bound",w:10,qty:()=>1},
-    {item:"Heavenly Potion",w:8, qty:()=>1},
-    {item:"Godlike Potion", w:4, qty:()=>1},
-    {item:"Warp Potion",    w:5, qty:()=>Math.ceil(rnd()*2)},
-    {item:"Oblivion Potion",w:2, qty:()=>1},
-    {item:"Transcendent Potion",w:0.5,qty:()=>1},
-  ],
-};
-function openChest(type){
+});function openChest(type){
   const table=CHEST_TABLES[type];if(!table)return;
   const total=table.reduce((s,r)=>s+r.w,0);
   let rv=rnd()*total,reward=table[0];
@@ -821,3 +670,26 @@ function initDayNight(){
     timeBar.style.color=S.isDay?"#ffd700":"#8888ff";
   }
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  INIT — runs after ALL scripts are loaded
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(function init(){
+  load();
+  // Clear equipped gears that no longer exist in GEARS array
+  if(S.equipped_R && !GEARS.find(g=>g&&g.name===S.equipped_R)) S.equipped_R=null;
+  if(S.equipped_L && !GEARS.find(g=>g&&g.name===S.equipped_L)) S.equipped_L=null;
+  updateHUD();
+  updateBiomeBar();
+  updateEquippedBadge();
+  initDayNight();
+  updateCompanion();
+  resize();
+  requestAnimationFrame(loop);
+  startBgWorker();
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+  // Supabase init last — auto-loads cloud save if already signed in
+  setTimeout(initSupabase, 500);
+})();

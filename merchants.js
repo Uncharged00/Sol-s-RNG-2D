@@ -224,3 +224,4 @@ function openMerchant(){
   }
 
   document.getElementById("overlay").classList.add("open");
+}

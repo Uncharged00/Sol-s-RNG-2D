@@ -1,23 +1,3 @@
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// state.js — Game state object, save/load, helpers
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-}
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  INIT
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-load();
-  // Clear equipped gears that no longer exist
-  if(S.equipped_R && !GEARS.find(g=>g&&g.name===S.equipped_R)) S.equipped_R=null;
-  if(S.equipped_L && !GEARS.find(g=>g&&g.name===S.equipped_L)) S.equipped_L=null;
-  updateHUD();updateBiomeBar();updateEquippedBadge();initDayNight();updateCompanion();
-  // initSupabase will auto-load cloud save if already signed in
-  initSupabase();
-requestAnimationFrame(loop);
-// Start background worker — keeps rolling even when tab is hidden
-startBgWorker();
-if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  AUDIO ENGINE  —  scheduler-based, drift-free, loops forever
 //  Web Audio API only — no files, fully offline
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
