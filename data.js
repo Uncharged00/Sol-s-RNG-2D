@@ -532,7 +532,3 @@ function calcSpeed(){
   base*=(1-Math.min(0.9,spd/100)); // cap at 90% reduction
   return Math.max(100,Math.round(base));
 }
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  ROLL
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
