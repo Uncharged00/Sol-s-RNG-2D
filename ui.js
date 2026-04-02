@@ -59,8 +59,6 @@ function addChatEntry(name,chance,col,glow,tier){
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function rgb(c){return "rgb("+c[0]+","+c[1]+","+c[2]+")";}
-function rgba(c,a){return "rgba("+c[0]+","+c[1]+","+c[2]+","+a+")";}
 
 function renderTabBar(tabs,onSwitch){
   const bar=document.getElementById("tab-bar");bar.innerHTML="";
@@ -154,7 +152,7 @@ function openOverlay(title){
 }
 
 // ── CRAFT SHOP ────────────────────────────────────────────────────────────────
-let shopTab=0;
+var shopTab=0;
 function openShop2(){
   const o=getOverlay();
   o.title.textContent="CRAFT";
@@ -212,7 +210,7 @@ function renderCraftItems(){
 }
 
 // ── INVENTORY ─────────────────────────────────────────────────────────────────
-let invTab=0;
+var invTab=0;
 function openInventory2(){
   const o=getOverlay();
   o.title.textContent="INVENTORY";
@@ -358,7 +356,7 @@ function renderInventoryTab(){
 }
 
 // ── COLLECTION ────────────────────────────────────────────────────────────────
-let collTab=0;
+var collTab=0;
 function openCollection(){
   const o=getOverlay();
   o.title.textContent="COLLECTION";

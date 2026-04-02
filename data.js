@@ -361,8 +361,8 @@ const POTION_RECIPES=[
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  UTIL
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const rgb=c=>`rgb(${c[0]},${c[1]},${c[2]})`;
-const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+function rgb(c){return `rgb(${c[0]},${c[1]},${c[2]})`; }
+function rgba(c,a){return `rgba(${c[0]},${c[1]},${c[2]},${a})`;}
 const rnd=()=>Math.random();
 const TIER_NAMES=["Basic","Epic","Unique","Legendary","Mythic","Exalted","Glorious","Transcendent"];
 const TIER_COLS=["#aaa","#b070ff","#00e5ff","#ffd700","#ff70ff","#ff5050","#ffff40","#ffffff"];
