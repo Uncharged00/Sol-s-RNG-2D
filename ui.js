@@ -17,6 +17,17 @@ var COMPANIONS =[
 var COMP_WEIGHTS ={Common:60,Rare:30,Epic:10};
 
 // ── Companion display ──────────────────────────────────────────────────────────
+function updateHUD() {
+    // This updates the HTML elements you have in your index.html
+    const coinsEl = document.getElementById("hud-coins");
+    const rollsEl = document.getElementById("hud-rolls");
+    const luckEl = document.getElementById("hud-luck");
+
+    if (coinsEl) coinsEl.textContent = S.coins.toLocaleString();
+    if (rollsEl) rollsEl.textContent = S.rolls.toLocaleString();
+    if (luckEl) luckEl.textContent = Math.round(calcLuck() * 100) + "%";
+}
+
 function updateCompanion(){
   let el=document.getElementById("companion-display");
   if(!el){
