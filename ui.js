@@ -18,15 +18,19 @@ var COMP_WEIGHTS ={Common:60,Rare:30,Epic:10};
 
 // ── Companion display ──────────────────────────────────────────────────────────
 function updateHUD() {
-    // ... your other HUD code (coins, rolls)
-    
+    // If S doesn't exist yet, stop the function so it doesn't break the game
+    if (typeof S === 'undefined') return;
+
+    const coinsEl = document.getElementById("hud-coins");
+    const rollsEl = document.getElementById("hud-rolls");
     const luckEl = document.getElementById("hud-luck");
+
+    if (coinsEl) coinsEl.textContent = (S.coins || 0).toLocaleString();
+    if (rollsEl) rollsEl.textContent = (S.rolls || 0).toLocaleString();
+    
     if (luckEl) {
-        let luckValue = calcLuck(); 
-        
-        // If your luck is 1x (base), this will show 100%
-        // If your luck is 3x, this will show 300%
-        luckEl.textContent = Math.round(luckValue * 100) + "%";
+        const luckVal = typeof calcLuck === "function" ? calcLuck() : 1;
+        luckEl.textContent = Math.round(luckVal * 100) + "%";
     }
 }
 
