@@ -160,7 +160,6 @@ const GEARS=[
   {name:"Shining Star",     hand:"R",tier:"T2",luck_add:50,   speed_add:0,   coin_mult:1.0,  color:[255,240,100], cost:8000,    effect:"+50% Luck (+5× in Starfall)"},
   {name:"Eclipse Device",   hand:"R",tier:"T3",luck_add:50,   speed_add:15,  coin_mult:1.0,  color:[255,140,0],   cost:15000,   effect:"+50% Luck, +15% Speed"},
   {name:"Exo Gauntlet",     hand:"R",tier:"T3",luck_add:100,  speed_add:20,  coin_mult:1.0,  color:[0,200,160],   cost:30000,   effect:"+100% Luck, +20% Speed"},
-  {name:"Jackpot Gauntlet", hand:"R",tier:"T3",luck_add:77,   speed_add:7,   coin_mult:1.77, color:[255,215,0],   cost:50000,   effect:"+77% Luck, +7% Speed, +77% Coins"},
   {name:"Frozen Gauntlet",  hand:"R",tier:"T3",luck_add:150,  speed_add:-25, coin_mult:1.0,  color:[160,220,255], cost:40000,   effect:"+150% Luck, -25% Speed"},
   {name:"Windstorm Device", hand:"R",tier:"T4",luck_add:115,  speed_add:25,  coin_mult:1.0,  color:[180,210,255], cost:80000,   effect:"+115% Luck, +25% Speed"},
   {name:"Subzero Device",   hand:"R",tier:"T5",luck_add:150,  speed_add:30,  coin_mult:1.0,  color:[100,200,255], cost:150000,  effect:"+150% Luck, +30% Speed"},
@@ -176,6 +175,7 @@ const GEARS=[
   // ── LEFT HAND ──────────────────────────────────────────────────────────
   
   {name:"Gemstone Gauntlet",     hand:"L",tier:"T3",bonus_mult:2,   every_bonus:false,luck_add:50, speed_add:0,coin_mult:1.0, color:[100,200,200], cost:40000,   effect:"+80% Luck (randomised each roll)"},
+  {name:"Jackpot Gauntlet",      hand:"L",tier:"T3",luck_add:77,   speed_add:7,   coin_mult:1.77, color:[255,215,0],   cost:50000,   effect:"+77% Luck, +7% Speed, +77% Coins"},
   {name:"Tide Gauntlet",         hand:"L",tier:"T3",bonus_mult:2,   every_bonus:false,luck_add:50,speed_add:0,coin_mult:1.0, color:[0,160,220],   cost:35000,   effect:"+50% Luck, every 6th roll = Rainy"},
   {name:"Flesh Device",          hand:"L",tier:"T5",bonus_mult:1.3, every_bonus:true, luck_add:0, speed_add:0,coin_mult:1.0, color:[200,80,80],   cost:80000,   effect:"Every roll is a Bonus Roll (×1.3)"},
   {name:"Blessed Tide Gauntlet", hand:"L",tier:"T5",bonus_mult:2,   every_bonus:false,luck_add:120,speed_add:10,coin_mult:1.0,color:[0,200,255],  cost:200000,  effect:"+120% Luck, every 6th roll = Starfall"},
@@ -294,8 +294,6 @@ const GEAR_RECIPES=[
    ingredients:[{name:"Hades",qty:1},{name:"Rage: Heated",qty:10},{name:"Diaboli",qty:140},{name:"Rage",qty:1000},{name:"Bleeding",qty:55},{name:"Gear Basing",qty:6},{name:"Solar Device",qty:1},{name:"Windstorm Device",qty:1}]},
   {gear:"Genesis Drive",desc:"+1000% Luck +80% Speed",hand:"R",
    ingredients:[{name:"GENESIS",qty:1},{name:"Galactic Device",qty:1},{name:"Volcanic Device",qty:1},{name:"Powered",qty:100},{name:"Exotic",qty:50}]},
-  {gear:"Jackpot Gauntlet (L)",desc:"Bonus Roll: ×60 Luck",hand:"L",
-   ingredients:[{name:"Gear Basing",qty:7},{name:"Jackpot",qty:77},{name:"Gilded",qty:77},{name:"Rare",qty:777}]},
   {gear:"Gemstone Gauntlet",desc:"+80% Luck (random each roll)",hand:"L",
    ingredients:[{name:"Gear Basing",qty:3},{name:"Sapphire",qty:5},{name:"Aquamarine",qty:5},{name:"Topaz",qty:5},{name:"Ruby",qty:3}]},
   {gear:"Tide Gauntlet",desc:"+50% Luck, every 6th = Rainy",hand:"L",
@@ -385,7 +383,7 @@ const S={
   rollCooldown:0, rollInterval:60,
   particles:[],
   lastAura:null,
-  autoRoll:true,
+  autoRoll:false,
   bonusRollCtr:0,
   owned_auras:{},
   owned_items:{},        // lucky potions, gear basings, crafted potions
