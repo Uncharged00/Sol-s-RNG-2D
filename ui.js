@@ -465,8 +465,12 @@ function renderCollTab(){
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 function openSettings(){
-  const o=getOverlay();
-  o.title.textContent="⚙️ SETTINGS";
+  if (event) event.stopPropagation();
+  const o = getOverlay();
+  // This line is the "Exorcist" — it kills the Collection tabs
+  o.tabbar.innerHTML = ""; 
+  o.title.textContent = "⚙️ SETTINGS";
+
   const c=o.content;
   c.style.cssText="padding:4px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;";
 
