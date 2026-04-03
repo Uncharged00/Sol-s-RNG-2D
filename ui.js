@@ -29,8 +29,8 @@ function updateHUD() {
     if (rollsEl) rollsEl.textContent = (S.rolls || 0).toLocaleString();
     
     if (luckEl) {
-        const luckVal = typeof calcLuck === "function" ? calcLuck() : 1;
-        luckEl.textContent = Math.round(luckVal);
+        const luckVal = typeof calcLuck === "function" ? calcLuck() : 100;
+        luckEl.textContent = Math.round(luckVal/100).toFixed(2);
     }
 }
 
