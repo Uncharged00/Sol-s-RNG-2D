@@ -465,10 +465,17 @@ function renderCollTab(){
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 function openSettings(){
-  if (event) event.stopPropagation();
   const o = getOverlay();
-  // This line is the "Exorcist" — it kills the Collection tabs
+  
+  // 1. CLEAR THE TABS (This removes the Collection/Shop categories)
   o.tabbar.innerHTML = ""; 
+  
+  // 2. CLEAR THE CONTENT (This removes the actual Collection items/Auras)
+  o.content.innerHTML = ""; 
+  
+  // 3. RESET THE SCROLL (Prevents the menu from being scrolled halfway down)
+  o.content.scrollTop = 0;
+
   o.title.textContent = "⚙️ SETTINGS";
 
   const c=o.content;
@@ -481,7 +488,7 @@ function openSettings(){
   const aeSelect=document.createElement("select");
   aeSelect.style.cssText="width:100%;background:rgba(0,0,20,0.8);color:#ccc;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:6px;font-family:'Courier New',monospace;font-size:11px;";
   const aeNone=document.createElement("option");aeNone.value="";aeNone.textContent="— Off —";aeSelect.appendChild(aeNone);
-  Object.keys(S.owned_auras).forEach(name=>{const o2=document.createElement("option");o2.value=name;o2.textContent=name;if(S.autoEquip===name)o2.selected=true;aeSelect.appendChild(o2);});
+  Object.keys(S.owned_auras || {}).forEach(name=>{const o2=document.createElement("option");o2.value=name;o2.textContent=name;if(S.autoEquip===name)o2.selected=true;aeSelect.appendChild(o2);});
   aeSelect.onchange=()=>{S.autoEquip=aeSelect.value||null;save();};
   aeSection.appendChild(aeSelect);
   c.appendChild(aeSection);
