@@ -364,8 +364,8 @@ const POTION_RECIPES=[
 function rgb(c){return `rgb(${c[0]},${c[1]},${c[2]})`; }
 function rgba(c,a){return `rgba(${c[0]},${c[1]},${c[2]},${a})`;}
 const rnd=()=>Math.random();
-const TIER_NAMES=["Basic","Epic","Unique","Legendary","Mythic","Exalted","Glorious","Transcendent"];
-const TIER_COLS=["#aaa","#b070ff","#00e5ff","#ffd700","#ff70ff","#ff5050","#ffff40","#ffffff"];
+var TIER_NAMES=["Basic","Epic","Unique","Legendary","Mythic","Exalted","Glorious","Transcendent"];
+var TIER_COLS=["#aaa","#b070ff","#00e5ff","#ffd700","#ff70ff","#ff5050","#ffff40","#ffffff"];
 function auraTier(c){return c<1000?0:c<10000?1:c<100000?2:c<1000000?3:c<10000000?4:c<100000000?5:c<1000000000?6:7;}
 
 let toastTimer;
