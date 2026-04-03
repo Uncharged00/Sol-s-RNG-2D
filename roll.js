@@ -1,7 +1,3 @@
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// roll.js — All roll logic: calcLuck, calcSpeed, doRoll, doBgRoll, gameTick, biome, day/night
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 function doRoll(){
   const luck=calcLuck();
   const biome=BIOMES[S.biomeIdx];
