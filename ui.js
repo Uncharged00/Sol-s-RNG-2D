@@ -43,6 +43,18 @@ function updateBiomeBar() {
     }
 }
 
+function updateAuraDisplay(aura) {
+    const nameEl = document.getElementById("aura-name");
+    const tierEl = document.getElementById("aura-tier");
+    
+    if (nameEl && aura) {
+        nameEl.textContent = aura.name;
+        nameEl.style.color = aura.color || "#fff";
+        // If your aura object has a tier, display it too
+        if (tierEl) tierEl.textContent = aura.tier || "";
+    }
+}
+
 function updateCompanion(){
   let el=document.getElementById("companion-display");
   if(!el){
@@ -731,3 +743,4 @@ function updateBuffTray(){
   });
 }
 
+document.getElementById("btn-settings").addEventListener("click", openSettings);
