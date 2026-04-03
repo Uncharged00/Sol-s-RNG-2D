@@ -28,13 +28,24 @@ function doRoll(){
 
   // eligible auras — biome exclusive auras get weight boosted by biome.mult
   const biomeMult=BIOMES[S.biomeIdx].mult;
-  const elig=AURAS.filter(a=>!a[4]||a[4]===biome.name);
-  const weights=elig.map(a=>{
-    const base=(effLuck/100)/a[1];
-    let w=(a[4]&&a[4]===biome.name)?base*biomeMult:base;
-    if(a[0]==="Solar"&&S.isDay) w*=10;
-    if(a[0]==="Lunar"&&!S.isDay) w*=10;
-    return w;
+  // --- New Logic: Rarity Floor ---
+  // If effLuck is 30,000, floor is 1,000. No auras easier than 1/1000 can drop.
+  const luckFloor = Math.floor(effLuck / 30); 
+
+  const elig = AURAS.filter(a => {
+    const isCorrectBiome = !a[4] || a[4] === biome.name;
+    // Keep if it's hard enough OR if it's the absolute base "Common" (fallback)
+    const isHardEnough = a[1] >= luckFloor || a[1] <= 2;
+    return isCorrectBiome && isHardEnough;
+  });
+
+  const weights = elig.map(a => {
+    // We use a Power Curve (Math.pow) so rare auras actually stand a chance
+    let w = Math.pow(effLuck / a[1], 1.2);
+    if (a[4] && a[4] === biome.name) w *= biomeMult;
+    if (a[0] === "Solar" && S.isDay) w *= 10;
+    if (a[0] === "Lunar" && !S.isDay) w *= 10;
+    return Math.max(w, 0.00001);
   });
   const total=weights.reduce((s,w)=>s+w,0);
   let r=rnd()*total,picked=elig[0];
