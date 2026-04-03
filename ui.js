@@ -28,6 +28,21 @@ function updateHUD() {
     if (luckEl) luckEl.textContent = Math.round(calcLuck() * 100) + "%";
 }
 
+function updateBiomeBar() {
+    const bar = document.getElementById("biome-bar");
+    if (bar) {
+        // This assumes BIOMES is an array defined in your data.js
+        // and S.biomeIdx is the current biome index
+        const currentBiome = BIOMES[S.biomeIdx];
+        bar.textContent = "🌍 " + (currentBiome ? currentBiome.name : "Normal");
+        
+        // Optional: Change the color of the bar based on the biome
+        if (currentBiome && currentBiome.color) {
+            bar.style.borderColor = currentBiome.color;
+        }
+    }
+}
+
 function updateCompanion(){
   let el=document.getElementById("companion-display");
   if(!el){
