@@ -283,7 +283,7 @@ const GEAR_RECIPES=[
   {gear:"Shining Star",desc:"+50% Luck (+5x in Starfall)",hand:"R",
    ingredients:[{name:"Gear Basing",qty:2},{name:"Starlight",qty:1},{name:"Sidereum",qty:2},{name:"Comet",qty:1}]},
   {gear:"Frozen Gauntlet",desc:"+150% Luck, -25% Speed",hand:"R",
-   ingredients:[{name:"Gear Basing",qty:5},{name:"Permafrost",qty:1,{name:"Glacier",qty:1}]},
+   ingredients:[{name:"Gear Basing",qty:5},{name:"Permafrost",qty:1},{name:"Glacier",qty:1}]},
   {gear:"Eclipse Device",desc:"+50% Luck +15% Speed",hand:"R",
    ingredients:[{name:"Eclipse",qty:1},{name:"Solar Device",qty:1},{name:"Lunar Device",qty:1}]},
   {gear:"Exo Gauntlet",desc:"+100% Luck +20% Speed",hand:"R",
