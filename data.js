@@ -147,7 +147,7 @@ const POTIONS=[
   {name:"Fortune I",   luck_add:150, dur:300, color:[200,200,80],  cost:200},
   {name:"Fortune II",  luck_add:200, dur:420, color:[220,220,100], cost:500},
   {name:"Fortune III", luck_add:250, dur:600, color:[255,255,120], cost:1200},
-  {name:"Lucky Potion",luck_add:300, dur:600, color:[255,215,0],   cost:2500},
+  {name:"Lucky Potion",luck_add:100, dur:600, color:[255,215,0],   cost:2500},
   {name:"Heavenly",  luck_add:100000,dur:60,color:[255,240,160], cost:100000},
 ];
 
