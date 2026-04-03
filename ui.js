@@ -152,7 +152,7 @@ function openOverlay(title){
 }
 
 // ── CRAFT SHOP ────────────────────────────────────────────────────────────────
-var shopTab=0;
+let shopTab=0;
 function openShop2(){
   const o=getOverlay();
   o.title.textContent="CRAFT";

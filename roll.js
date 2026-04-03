@@ -489,7 +489,6 @@ function getIngredientHave(name){
   return (S.owned_auras[name]||0)+(S.owned_items[name]||0)+(S.owned_gears[name]?1:0);
 }
 
-let shopTab=0;
 function openShop(){
   shopTab=0;
   document.getElementById("overlay-title").textContent="CRAFTING";
