@@ -30,7 +30,7 @@ function updateHUD() {
     
     if (luckEl) {
         const luckVal = typeof calcLuck === "function" ? calcLuck() : 1;
-        luckEl.textContent = calcLuck() + "%";
+        luckEl.textContent = Math.round(luckVal);
     }
 }
 
