@@ -18,14 +18,16 @@ var COMP_WEIGHTS ={Common:60,Rare:30,Epic:10};
 
 // ── Companion display ──────────────────────────────────────────────────────────
 function updateHUD() {
-    // This updates the HTML elements you have in your index.html
-    const coinsEl = document.getElementById("hud-coins");
-    const rollsEl = document.getElementById("hud-rolls");
+    // ... your other HUD code (coins, rolls)
+    
     const luckEl = document.getElementById("hud-luck");
-
-    if (coinsEl) coinsEl.textContent = S.coins.toLocaleString();
-    if (rollsEl) rollsEl.textContent = S.rolls.toLocaleString();
-    if (luckEl) luckEl.textContent = Math.round(calcLuck() * 100) + "%";
+    if (luckEl) {
+        let luckValue = calcLuck(); 
+        
+        // If your luck is 1x (base), this will show 100%
+        // If your luck is 3x, this will show 300%
+        luckEl.textContent = Math.round(luckValue * 100) + "%";
+    }
 }
 
 function updateBiomeBar() {
