@@ -28,33 +28,34 @@ function doRoll(){
 
   // eligible auras — biome exclusive auras get weight boosted by biome.mult
   const biomeMult=BIOMES[S.biomeIdx].mult;
-  // 1. Convert your 30,000% luck into a usable multiplier (300.0)
-  const baseLuck = effLuck / 100; 
+  // luck-based weight: higher luck = rarer auras get more weight relative to commons
+  const baseLuck = effLuck / 100;
 
-  // 2. Set a Rarity Floor
-  // This says: "At 30,000% luck, ignore everything easier than 1 in 10"
-  // (Adjust the / 30 to / 100 if you want it to be even stricter)
-  const luckFloor = Math.floor(baseLuck / 30); 
+  // Gentle floor: only filter out auras WAY below your luck tier
+  // divisor=100000 means Heavenly(baseLuck~150001) floor=1 → almost nothing filtered
+  // This keeps commons in the pool but the power curve still favors rares
+  const luckFloor = Math.max(1, Math.floor(baseLuck / 100000));
 
   const elig = AURAS.filter(a => {
     const isCorrectBiome = !a[4] || a[4] === biome.name;
-    // We KEEP the aura if it's rarer than the floor OR if it's the 1/1 Common
-    return isCorrectBiome && (a[1] >= luckFloor || a[1] <= 1);
+    return isCorrectBiome && a[1] >= luckFloor;
   });
 
   const weights = elig.map(a => {
-    // If it's the 1/1 Common, give it a tiny static weight so it stays as a fallback
-    if (a[1] <= 1) return 0.01;
-
-    // Use the baseLuck (300) instead of effLuck (30,000) for the power curve
-    // This prevents the numbers from exploding and breaking the RNG
-    let w = Math.pow(baseLuck / a[1], 1.2);
+    // Power curve: luck/chance with exponent >1 makes rarer auras scale faster
+    // At baseLuck=150001, Common(2) weight = (150001/2)^1.5 = 5.3B
+    // At baseLuck=150001, Overture(300M) weight = (150001/300M)^1.5 = 0.000003
+    // Still commons dominate but ultra-rares become possible
+    // Use sqrt scaling to compress the range and make potions matter more
+    let w = baseLuck / a[1];
+    // Apply power only for moderate luck — prevents overflow
+    if(baseLuck > 100) w = Math.pow(w, 0.8);
     
     if (a[4] && a[4] === biome.name) w *= biomeMult;
     if (a[0] === "Solar" && S.isDay) w *= 10;
     if (a[0] === "Lunar" && !S.isDay) w *= 10;
     
-    return Math.max(w, 0.000001);
+    return Math.max(w, 0.0000001);
   });
   const total=weights.reduce((s,w)=>s+w,0);
   let r=rnd()*total,picked=elig[0];
@@ -355,6 +356,23 @@ function loop(ts){
     // Update cooldown bar (convert ms to 0-1 fraction)
     const pct=S.rollInterval>0?Math.max(0,1-(S.rollCooldown/S.rollInterval)):1;
     document.getElementById("coolbar-fill").style.width=(pct*100)+"%";
+    // Bonus roll countdown
+    const bcEl=document.getElementById("bonus-countdown");
+    if(bcEl){
+      const fleshActive=S.equipped_L==="Flesh Device";
+      if(fleshActive){
+        bcEl.textContent="✨ EVERY ROLL IS BONUS";
+        bcEl.style.color="#ffd700";
+      } else {
+        // Period is 10 by default
+        const period=10;
+        const remaining=period-(S.bonusRollCtr%period);
+        const bonusMult=S.equipped_L==="Gravitational Device"?6:S.equipped_L==="Blessed Tide Gauntlet"?2:2;
+        const isNext=remaining===period; // about to trigger
+        bcEl.textContent=remaining===period?"⚡ BONUS NEXT ROLL!":"🎲 Bonus in "+remaining+" rolls (×"+bonusMult+")";
+        bcEl.style.color=remaining<=2?"#ffd700":remaining<=5?"#aa8840":"#555";
+      }
+    }
 
     tickCutscene();
     tickStarCutscene();

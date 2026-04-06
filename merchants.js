@@ -39,7 +39,7 @@ const MERCHANT_DEFS={
         return shuffled.map(item=>({
           ...item,
           action:()=>{
-            if(item.name.includes("Chest")){const t=item.name.includes("Rare")?"Rare":"Normal";openChest(t);}
+            if(item.name.includes("Chest")){S.owned_items[item.name]=(S.owned_items[item.name]||0)+1;save();toast("📦 "+item.name+" added to inventory!");}
             else if(item.name==="Fortune Spoid I")  usePotion({name:"Fortune Spoid I",luck_add:50,dur:60});
             else if(item.name==="Fortune Spoid II") usePotion({name:"Fortune Spoid II",luck_add:75,dur:60});
             else if(item.name==="Fortune Spoid III")usePotion({name:"Fortune Spoid III",luck_add:100,dur:60});
