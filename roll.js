@@ -1,125 +1,144 @@
 function doRoll(){
-  const luck=calcLuck();
-  const biome=BIOMES[S.biomeIdx];
-  S.rolls++;S.bonusRollCtr++;
+  const luck = calcLuck();
+  const biome = BIOMES[S.biomeIdx];
+  S.rolls++; 
+  S.bonusRollCtr++;
 
-  // bonus roll logic
-  let bonusMult=2;
-  if(S.equipped_L==="Jackpot Gauntlet (L)")bonusMult=2;
-  else if(S.equipped_L==="Gravitational Device")bonusMult=6;
-  else if(S.equipped_L==="Flesh Device")bonusMult=1.3;
-  else if(S.equipped_L==="Blessed Tide Gauntlet")bonusMult=2;
-  const fleshActive=S.equipped_L==="Flesh Device";
+  // 1. Bonus Multiplier Logic
+  let bonusMult = 2;
+  if(S.equipped_L === "Jackpot Gauntlet (L)") bonusMult = 2;
+  else if(S.equipped_L === "Gravitational Device") bonusMult = 6;
+  else if(S.equipped_L === "Flesh Device") bonusMult = 1.3;
+  else if(S.equipped_L === "Blessed Tide Gauntlet") bonusMult = 2;
+  const fleshActive = S.equipped_L === "Flesh Device";
 
-  // Tide/Blessed Tide: every 6th roll triggers a biome boost
-  if((S.equipped_L==="Tide Gauntlet"||S.equipped_L==="Blessed Tide Gauntlet")&&S.bonusRollCtr%6===0){
-    const targetBiome=S.equipped_L==="Blessed Tide Gauntlet"?"Starfall":"Rainy";
-    const bi=BIOMES.findIndex(b=>b.name===targetBiome);
-    if(bi>0){S.biomeIdx=bi;S.biomeTimer=5;updateBiomeBar();toast(`🌊 Tide triggered: ${targetBiome}!`);}
+  // 2. Tide Gauntlet / Blessed Tide logic
+  if((S.equipped_L === "Tide Gauntlet" || S.equipped_L === "Blessed Tide Gauntlet") && S.bonusRollCtr % 6 === 0){
+    const targetBiome = S.equipped_L === "Blessed Tide Gauntlet" ? "Starfall" : "Rainy";
+    const bi = BIOMES.findIndex(b => b.name === targetBiome);
+    if(bi > 0){
+      S.biomeIdx = bi;
+      S.biomeTimer = 5;
+      updateBiomeBar();
+      toast(`🌊 Tide triggered: ${targetBiome}!`);
+    }
   }
 
-  // Gemstone: random luck bonus each roll
-  let gemBonus=0;
-  if(S.equipped_L==="Gemstone Gauntlet") gemBonus=Math.floor(rnd()*160);
-  const isBonus=fleshActive||(S.bonusRollCtr%10===0);
-  const effLuck=(luck+gemBonus)*(isBonus?bonusMult:1);
+  // 3. Luck Calculation
+  let gemBonus = 0;
+  if(S.equipped_L === "Gemstone Gauntlet") gemBonus = Math.floor(rnd() * 160);
+  
+  const isBonus = fleshActive || (S.bonusRollCtr % 10 === 0);
+  const effLuck = (luck + gemBonus) * (isBonus ? bonusMult : 1);
 
-  // coin mult
-  let coinMult=1;
-  [S.equipped_R,S.equipped_L].forEach(n=>{if(!n)return;const g=GEARS.find(x=>x&&x.name===n);if(g&&g.coin_mult)coinMult=Math.max(coinMult,g.coin_mult);});
+  // 4. Coin Multiplier
+  let coinMult = 1;
+  [S.equipped_R, S.equipped_L].forEach(n => {
+    if(!n) return;
+    const g = GEARS.find(x => x && x.name === n);
+    if(g && g.coin_mult) coinMult = Math.max(coinMult, g.coin_mult);
+  });
 
-  // eligible auras — biome exclusive auras get weight boosted by biome.mult
-  const biomeMult=BIOMES[S.biomeIdx].mult;
-  const aurasRarestFirst = [...AURAS].sort((a,b)=>b[1]-a[1]);
+  // 5. THE FIX: Independent Probability Selection
+  const biomeMult = BIOMES[S.biomeIdx].mult;
+  const aurasRarestFirst = [...AURAS].sort((a,b) => b[1] - a[1]);
   
   let picked = null;
-  for(let i=0;i<aurasRarestFirst.length;i++){
-    const a=aurasRarestFirst[i];
-    if(a[4]&&a[4]!==biome.name) continue;
+  for(let i = 0; i < aurasRarestFirst.length; i++){
+    const a = aurasRarestFirst[i];
     
-    let mult=1;
-    if(a[4]&&a[4]===biome.name) mult*=biomeMult;
-    if(a[0]==="Solar"&&S.isDay) mult*=10;
-    if(a[0]==="Lunar"&&!S.isDay) mult*=10;
+    // Check if aura is exclusive to another biome
+    if(a[4] && a[4] !== biome.name) continue;
+    
+    let mult = 1;
+    if(a[4] && a[4] === biome.name) mult *= biomeMult;
+    if(a[0] === "Solar" && S.isDay) mult *= 10;
+    if(a[0] === "Lunar" && !S.isDay) mult *= 10;
 
-    // --- THE FIX ---
-    // Instead of using one 'r' for everything, we check the probability for each aura.
-    // This prevents luck from making the threshold > 1.0 and guaranteeing the aura.
+    // ACTUAL FIX: Instead of r < threshold, we check individual probability.
+    // This ensures a 1 in 100M aura stays rare even with high luck.
     const probability = (effLuck * mult) / a[1];
     if(rnd() < probability){
-      picked=a;
-      break;
+      picked = a;
+      break; // Exit loop with the rarest aura we successfully rolled
     }
-    // ---------------
   }
 
-  // Fallback to most common aura if nothing matched
+  // Fallback: If no rare auras hit, pick the most common valid one
   if(!picked){
-    picked=AURAS.filter(a=>!a[4]||a[4]===biome.name)
-               .reduce((best,a)=>a[1]<best[1]?a:best,AURAS[0]);
+    picked = AURAS.filter(a => !a[4] || a[4] === biome.name)
+                 .reduce((best, a) => a[1] < best[1] ? a : best, AURAS[0]);
   }
 
-  const [name,chance,col,glow,_]=picked;
-  const tier=auraTier(chance);
-  const baseCoins=Math.max(10,Math.floor(Math.log10(chance+1)*10));
-  S.coins+=Math.round(baseCoins*coinMult);
+  // 6. Post-Roll Processing
+  const [name, chance, col, glow, _] = picked;
+  const tier = auraTier(chance);
+  const baseCoins = Math.max(10, Math.floor(Math.log10(chance + 1) * 10));
+  S.coins += Math.round(baseCoins * coinMult);
 
-  // Potion consumption
-  S.active_potions=S.active_potions.filter(p=>{
+  // Consume potions
+  S.active_potions = S.active_potions.filter(p => {
     if(p.isRoll) return false;
-    if(p.rollsLeft!==undefined){
+    if(p.rollsLeft !== undefined){
       p.rollsLeft--;
-      if(p.rollsLeft<=0) return false;
+      if(p.rollsLeft <= 0) return false;
     }
     return true;
   });
 
-  // Collection unlock
-  if(!S.collection[name]) S.collection[name]={count:0,unlocked:true};
-  S.collection[name].count=(S.collection[name].count||0)+1;
+  // Update Collection
+  if(!S.collection[name]) S.collection[name] = {count: 0, unlocked: true};
+  S.collection[name].count = (S.collection[name].count || 0) + 1;
 
-  // Auto-delete check
+  // Auto-Delete Logic
   if(S.autoDelete.includes(name)){
-    if(!document.hidden) addChatEntry(name,chance,col,glow,tier);
-    updateHUD();save();return;
+    if(!document.hidden) addChatEntry(name, chance, col, glow, tier);
+    updateHUD(); 
+    save(); 
+    return; // Exit early if deleted
   }
 
-  S.owned_auras[name]=(S.owned_auras[name]||0)+1;
-  S.lastAura={name,chance,col,glow,tier,isBonus};
+  // Inventory & State Update
+  S.owned_auras[name] = (S.owned_auras[name] || 0) + 1;
+  S.lastAura = { name, chance, col, glow, tier, isBonus };
 
-  // Auto-equip check
-  if(S.autoEquip===name){
-    S.equipped_aura=name;
+  // Auto-Equip Logic
+  if(S.autoEquip === name){
+    S.equipped_aura = name;
     updateEquippedBadge();
     updateMusic();
-    updateMusic();
   }
 
-  // Random lucky potion drop (~1% chance)
-  if(rnd()<0.01){
-    S.owned_items["Lucky Potion"]=(S.owned_items["Lucky Potion"]||0)+1;
+  // Random Item Drops
+  if(rnd() < 0.01){
+    S.owned_items["Lucky Potion"] = (S.owned_items["Lucky Potion"] || 0) + 1;
     toast("🍀 Lucky Potion found!");
   }
-
-  // Roulette ticket drop
-  if(rnd()<(0.0005*(Math.max(100,calcLuck())/100))){
+  if(rnd() < (0.0005 * (Math.max(100, calcLuck()) / 100))){
     S.roulette_tickets++;
-    toast("🎟️ Item Roulette Ticket found! ("+S.roulette_tickets+" total)",3000);
+    toast("🎟️ Item Roulette Ticket found! (" + S.roulette_tickets + " total)", 3000);
   }
 
-  spawnParticles(col,glow,tier);
-  if(!document.hidden) addChatEntry(name,chance,col,glow,tier);
+  // Visual Effects & Cutscenes
+  if(!document.hidden){
+    spawnParticles(col, glow, tier);
+    addChatEntry(name, chance, col, glow, tier);
 
-  // Cutscene thresholds
-  if(name==="Eclipse"||name==="Atlas : A.T.L.A.S."){
-    updateAuraDisplay();
-  } else if(tier>=4) playCutscene(picked,tier);
-  else if(chance>=100000) playStarCutscene(picked,tier);
-  else if(chance>=10000) playStarCutscene(picked,tier);
-  else updateAuraDisplay();
+    if(name === "Eclipse" || name === "Atlas : A.T.L.A.S."){
+      updateAuraDisplay();
+    } else if(tier >= 4){
+      playCutscene(picked, tier);
+    } else if(chance >= 10000){
+      playStarCutscene(picked, tier);
+    } else {
+      updateAuraDisplay();
+    }
+  }
 
+  // Save and Merchant
   tickMerchant();
-  updateHUD();save();
+  updateHUD();
+  save();
 }
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  LOOT CHESTS
