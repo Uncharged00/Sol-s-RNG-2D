@@ -4,55 +4,46 @@ function doRoll(){
   S.rolls++; 
   S.bonusRollCtr++;
 
-  // 1. Multipliers (Removed Jackpot for clarity since you aren't using it)
+  // 1. Calculate Luck
   let bonusMult = 1;
   if(S.equipped_L === "Gravitational Device") bonusMult = 6;
   else if(S.equipped_L === "Flesh Device") bonusMult = 1.3;
-  else if(S.equipped_L === "Blessed Tide Gauntlet") bonusMult = 2;
   
-  const fleshActive = S.equipped_L === "Flesh Device";
-  const isBonus = fleshActive || (S.bonusRollCtr % 10 === 0);
-
-  let gemBonus = 0;
-  if(S.equipped_L === "Gemstone Gauntlet") gemBonus = Math.floor(rnd() * 160);
-  
+  const isBonus = (S.equipped_L === "Flesh Device") || (S.bonusRollCtr % 10 === 0);
+  let gemBonus = (S.equipped_L === "Gemstone Gauntlet") ? Math.floor(rnd() * 160) : 0;
   const effLuck = (luck + gemBonus) * (isBonus ? bonusMult : 1);
 
-  // 2. Selection Logic (The Fix)
-  const aurasRarestFirst = [...AURAS].sort((a,b) => b[1] - a[1]);
-  let picked = null;
+  // 2. THE SELECTION FIX: Sort Common to Rare
+  // We sort by chance ASCENDING (1, 2, 5, 10...)
+  const aurasCommonFirst = [...AURAS].sort((a, b) => a[1] - b[1]);
+  
+  let picked = aurasCommonFirst[0]; // Default to the most common aura (e.g. "Common")
 
-  for(let i = 0; i < aurasRarestFirst.length; i++){
-    const a = aurasRarestFirst[i];
-    if(a[4] && a[4] !== biome.name) continue; // Biome exclusion
+  for (let i = 0; i < aurasCommonFirst.length; i++) {
+    const a = aurasCommonFirst[i];
     
-    let mult = 1;
-    if(a[4] && a[4] === biome.name) mult *= BIOMES[S.biomeIdx].mult;
-    if(a[0] === "Solar" && S.isDay) mult *= 10;
-    if(a[0] === "Lunar" && !S.isDay) mult *= 10;
+    // Skip if biome doesn't match
+    if (a[4] && a[4] !== biome.name) continue;
 
-    // --- LOGIC FIX ---
-    // Instead of comparing one 'r' to a threshold, 
-    // we roll a NEW random number for every single aura.
-    // This makes a 1/500M aura actually stay 1/500M rare.
-    if(rnd() < (effLuck * mult) / a[1]){
-      picked = a;
-      break; 
+    let mult = 1;
+    if (a[4] === biome.name) mult *= BIOMES[S.biomeIdx].mult;
+    if (a[0] === "Solar" && S.isDay) mult *= 10;
+    if (a[0] === "Lunar" && !S.isDay) mult *= 10;
+
+    // Check probability: (Luck / Rarity)
+    // If Luck is 3 and Rarity is 1000, chance is 0.003
+    if (rnd() < (effLuck * mult) / a[1]) {
+        // If we succeed, we "upgrade" our picked aura to this rarer one
+        // We DON'T break here, so we can keep trying for even rarer ones
+        picked = a;
     }
   }
 
-  // 3. Fallback Fix
-  // If no rare aura was hit, we MUST find the most common one available.
-  if(!picked){
-    const validCommons = AURAS.filter(a => !a[4] || a[4] === biome.name);
-    picked = validCommons.sort((a,b) => a[1] - b[1])[0]; // Pick the 1 in 1 or 1 in 2
-  }
-
-  // 4. Processing Results
+  // 3. Process the Result
   const [name, chance, col, glow, _] = picked;
   const tier = auraTier(chance);
   
-  // Coin calculation
+  // Coin Multiplier
   let coinMult = 1;
   [S.equipped_R, S.equipped_L].forEach(n => {
     if(!n) return;
@@ -61,27 +52,18 @@ function doRoll(){
   });
   S.coins += Math.round(Math.max(10, Math.floor(Math.log10(chance + 1) * 10)) * coinMult);
 
-  // Potion Consumption
-  S.active_potions = S.active_potions.filter(p => {
-    if(p.isRoll) return false;
-    if(p.rollsLeft !== undefined){
-      p.rollsLeft--;
-      if(p.rollsLeft <= 0) return false;
-    }
-    return true;
-  });
-
-  // Collection and Inventory
+  // Collection/Inventory
   if(!S.collection[name]) S.collection[name] = {count: 0, unlocked: true};
   S.collection[name].count++;
 
-  if(!S.autoDelete.includes(name)){
+  if(S.autoDelete.includes(name)){
+    if(!document.hidden) addChatEntry(name, chance, col, glow, tier);
+  } else {
     S.owned_auras[name] = (S.owned_auras[name] || 0) + 1;
     S.lastAura = { name, chance, col, glow, tier, isBonus };
-    if(S.autoEquip === name){ S.equipped_aura = name; updateEquippedBadge(); updateMusic(); }
   }
 
-  // Visuals and Merchant
+  // UI and Effects
   if(!document.hidden){
     spawnParticles(col, glow, tier);
     addChatEntry(name, chance, col, glow, tier);
