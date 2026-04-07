@@ -256,67 +256,50 @@ function onCutsceneDone(){
 }
 
 // Silent background roll — no visuals, no cutscenes
-function doBgRoll(){
-  const luck=calcLuck();
-  const biome=BIOMES[S.biomeIdx];
-  S.rolls++;S.bonusRollCtr++;
+function doBgRoll(count){
+  const luck = calcLuck();
+  const biome = BIOMES[S.biomeIdx];
+  const biomeMult = biome.mult;
 
-  let bonusMult=2;
-  if(S.equipped_L==="Jackpot Gauntlet (L)")bonusMult=60;
-  else if(S.equipped_L==="Gravitational Device")bonusMult=6;
-  else if(S.equipped_L==="Flesh Device")bonusMult=1.3;
-  const fleshActive=S.equipped_L==="Flesh Device";
-  const isBonus=fleshActive||(S.bonusRollCtr%10===0);
-  let gemBonus=0;
-  if(S.equipped_L==="Gemstone Gauntlet") gemBonus=Math.floor(rnd()*160);
-  const effLuck=(luck+gemBonus)*(isBonus?bonusMult:1);
+  for(let i=0; i<count; i++){
+    S.rolls++; S.bonusRollCtr++;
+    
+    // Fix the 60x Luck Bug
+    let bonusMult = (S.equipped_L === "Gravitational Device") ? 6 : 2;
+    const isBonus = (S.equipped_L === "Flesh Device") || (S.bonusRollCtr % 10 === 0);
+    const effLuck = luck * (isBonus ? bonusMult : 1);
 
-  let coinMult=1;
-  [S.equipped_R,S.equipped_L].forEach(n=>{
-    if(!n)return;
-    const g=GEARS.find(x=>x&&x.name===n);
-    if(g&&g.coin_mult) coinMult=Math.max(coinMult,g.coin_mult);
-  });
+    const elig = AURAS.filter(a => !a[4] || a[4] === biome.name)
+                     .sort((a,b) => b[1] - a[1]); // Rarest first
 
-  const biomeMult=BIOMES[S.biomeIdx].mult;
-  const elig=AURAS.filter(a=>!a[4]||a[4]===biome.name);
-  const weights=elig.map(a=>{
-    const base=(effLuck/100)/a[1];
-    let w=(a[4]&&a[4]===biome.name)?base*biomeMult:base;
-    if(a[0]==="Solar"&&S.isDay) w*=10;
-    if(a[0]==="Lunar"&&!S.isDay) w*=10;
-    return w;
-  });
-  const total=weights.reduce((s,w)=>s+w,0);
-  let r=rnd()*total,picked=elig[0];
-  for(let i=0;i<elig.length;i++){r-=weights[i];if(r<=0){picked=elig[i];break;}}
+    // IMPORTANT: Default to the MOST COMMON aura, not the rarest
+    let picked = elig[elig.length - 1]; 
 
-  const [name,chance,col,glow]=picked;
-  const tier=auraTier(chance);
-  S.coins+=Math.round(Math.max(1,Math.floor(Math.log10(chance+1)))*coinMult);
-  S.active_potions=S.active_potions.filter(p=>{
-    if(p.isRoll) return false;
-    if(p.rollsLeft!==undefined){p.rollsLeft--;if(p.rollsLeft<=0)return false;}
-    return true;
-  });
+    for(let j=0; j < elig.length; j++){
+      const a = elig[j];
+      let mult = 1;
+      if(a[4] === biome.name) mult *= biomeMult;
+      if(a[0] === "Solar" && S.isDay) mult *= 10;
+      if(a[0] === "Lunar" && !S.isDay) mult *= 10;
 
-  if(!S.collection[name]) S.collection[name]={count:0,unlocked:true};
-  S.collection[name].count=(S.collection[name].count||0)+1;
+      // Use the same probability math as the main roll
+      if(rnd() < (effLuck * mult) / a[1]){
+        picked = a;
+        break;
+      }
+    }
 
-  if(!S.autoDelete.includes(name)){
-    S.owned_auras[name]=(S.owned_auras[name]||0)+1;
-    if(S.autoEquip===name){S.equipped_aura=name;}
-    S.lastAura={name,chance,col,glow,tier,isBonus:false};
+    // Standard processing
+    const [name, chance, col, glow] = picked;
+    if(!S.collection[name]) S.collection[name] = {count: 0, unlocked: true};
+    S.collection[name].count++;
+
+    if(!S.autoDelete.includes(name)){
+        S.owned_auras[name] = (S.owned_auras[name] || 0) + 1;
+    }
   }
-
   tickMerchant();
-  // Ticket drop for bg rolls too (luck-scaled)
-  if(rnd()<(0.0005*(Math.max(100,calcLuck())/100))){
-    S.roulette_tickets++;
-    if(!document.hidden) setTimeout(()=>toast('🎟️ Item Roulette Ticket! ('+S.roulette_tickets+' total)',2500),0);
-  }
-  S.rollCooldown=S.rollInterval;
-  if(S.rolls%60===0) save();
+  save();
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
