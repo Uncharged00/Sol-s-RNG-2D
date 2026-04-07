@@ -3,19 +3,21 @@ function doRoll(){
   const biome=BIOMES[S.biomeIdx];
   S.rolls++;S.bonusRollCtr++;
 
-  // bonus roll
+  // bonus roll logic
   let bonusMult=2;
   if(S.equipped_L==="Jackpot Gauntlet (L)")bonusMult=2;
   else if(S.equipped_L==="Gravitational Device")bonusMult=6;
   else if(S.equipped_L==="Flesh Device")bonusMult=1.3;
   else if(S.equipped_L==="Blessed Tide Gauntlet")bonusMult=2;
   const fleshActive=S.equipped_L==="Flesh Device";
+
   // Tide/Blessed Tide: every 6th roll triggers a biome boost
   if((S.equipped_L==="Tide Gauntlet"||S.equipped_L==="Blessed Tide Gauntlet")&&S.bonusRollCtr%6===0){
     const targetBiome=S.equipped_L==="Blessed Tide Gauntlet"?"Starfall":"Rainy";
     const bi=BIOMES.findIndex(b=>b.name===targetBiome);
     if(bi>0){S.biomeIdx=bi;S.biomeTimer=5;updateBiomeBar();toast(`🌊 Tide triggered: ${targetBiome}!`);}
   }
+
   // Gemstone: random luck bonus each roll
   let gemBonus=0;
   if(S.equipped_L==="Gemstone Gauntlet") gemBonus=Math.floor(rnd()*160);
@@ -28,46 +30,46 @@ function doRoll(){
 
   // eligible auras — biome exclusive auras get weight boosted by biome.mult
   const biomeMult=BIOMES[S.biomeIdx].mult;
-  // luck-based weight: higher luck = rarer auras get more weight relative to commons
-  // ── ROLL SYSTEM: rarest→most common threshold check ──────────────────────
-  // r = random [0,1). For each aura sorted rarest→most common:
-  //   threshold = effLuck * multipliers / aura.chance
-  //   If r < threshold → pick this aura (rarer auras are harder but scale with luck)
-  //   Higher luck → thresholds shift upward → rarer auras become reachable
-  //   Lower-than-luck auras naturally become unreachable as thresholds exceed 1.0
-  // Sort auras from rarest to most common once per roll
   const aurasRarestFirst = [...AURAS].sort((a,b)=>b[1]-a[1]);
-  const r = rnd();
+  
   let picked = null;
   for(let i=0;i<aurasRarestFirst.length;i++){
     const a=aurasRarestFirst[i];
-    // Skip biome-exclusive auras that don't match current biome
     if(a[4]&&a[4]!==biome.name) continue;
-    // Calculate threshold: higher luck → higher threshold → more likely to pick
+    
     let mult=1;
     if(a[4]&&a[4]===biome.name) mult*=biomeMult;
     if(a[0]==="Solar"&&S.isDay) mult*=10;
     if(a[0]==="Lunar"&&!S.isDay) mult*=10;
-    const threshold=(effLuck*mult)/a[1];
-    if(r<threshold){picked=a;break;}
+
+    // --- THE FIX ---
+    // Instead of using one 'r' for everything, we check the probability for each aura.
+    // This prevents luck from making the threshold > 1.0 and guaranteeing the aura.
+    const probability = (effLuck * mult) / a[1];
+    if(rnd() < probability){
+      picked=a;
+      break;
+    }
+    // ---------------
   }
-  // Fallback to most common aura if nothing matched (very low luck scenarios)
+
+  // Fallback to most common aura if nothing matched
   if(!picked){
     picked=AURAS.filter(a=>!a[4]||a[4]===biome.name)
                .reduce((best,a)=>a[1]<best[1]?a:best,AURAS[0]);
   }
 
-
   const [name,chance,col,glow,_]=picked;
   const tier=auraTier(chance);
   const baseCoins=Math.max(10,Math.floor(Math.log10(chance+1)*10));
   S.coins+=Math.round(baseCoins*coinMult);
-  // Consume roll-type potions + decrement roll-based ones (Warp, Transcendent)
+
+  // Potion consumption
   S.active_potions=S.active_potions.filter(p=>{
-    if(p.isRoll) return false; // single-roll potions consumed
+    if(p.isRoll) return false;
     if(p.rollsLeft!==undefined){
       p.rollsLeft--;
-      if(p.rollsLeft<=0) return false; // expired
+      if(p.rollsLeft<=0) return false;
     }
     return true;
   });
@@ -78,7 +80,7 @@ function doRoll(){
 
   // Auto-delete check
   if(S.autoDelete.includes(name)){
-    if(!document.hidden) addChatEntry(name,chance,col,glow,tier); // still show in chat
+    if(!document.hidden) addChatEntry(name,chance,col,glow,tier);
     updateHUD();save();return;
   }
 
@@ -98,7 +100,8 @@ function doRoll(){
     S.owned_items["Lucky Potion"]=(S.owned_items["Lucky Potion"]||0)+1;
     toast("🍀 Lucky Potion found!");
   }
-  // Roulette ticket drop — base 1/10000, scales with luck
+
+  // Roulette ticket drop
   if(rnd()<(0.0005*(Math.max(100,calcLuck())/100))){
     S.roulette_tickets++;
     toast("🎟️ Item Roulette Ticket found! ("+S.roulette_tickets+" total)",3000);
@@ -107,12 +110,12 @@ function doRoll(){
   spawnParticles(col,glow,tier);
   if(!document.hidden) addChatEntry(name,chance,col,glow,tier);
 
-  // Cutscene thresholds: 10k+ gets one; tier 3+ (Legendary) gets full cutscene
+  // Cutscene thresholds
   if(name==="Eclipse"||name==="Atlas : A.T.L.A.S."){
-    updateAuraDisplay(); // craft-only auras — no cutscene, handled by craft flow
-  } else if(tier>=4) playCutscene(picked,tier);            // Mythic+ (1M+) = full cutscene
-  else if(chance>=100000) playStarCutscene(picked,tier);   // Legendary (100k-999k) = 8-pt star
-  else if(chance>=10000) playStarCutscene(picked,tier);    // Unique (10k-99k) = 4-pt star
+    updateAuraDisplay();
+  } else if(tier>=4) playCutscene(picked,tier);
+  else if(chance>=100000) playStarCutscene(picked,tier);
+  else if(chance>=10000) playStarCutscene(picked,tier);
   else updateAuraDisplay();
 
   tickMerchant();
