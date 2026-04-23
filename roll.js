@@ -26,36 +26,21 @@ function doRoll(){
   let coinMult=1;
   [S.equipped_R,S.equipped_L].forEach(n=>{if(!n)return;const g=GEARS.find(x=>x&&x.name===n);if(g&&g.coin_mult)coinMult=Math.max(coinMult,g.coin_mult);});
 
-  // eligible auras — biome exclusive auras get weight boosted by biome.mult
+  // ── ROLL SYSTEM: weighted random pick (wiki formula) ─────────────────────
+  // weight = (effLuck/100) / baseRarity  → chance = luck / rarity
+  // Higher luck lifts all weights; rarer auras stay proportionally rare
   const biomeMult=BIOMES[S.biomeIdx].mult;
-  // luck-based weight: higher luck = rarer auras get more weight relative to commons
-  // ── ROLL SYSTEM: rarest→most common threshold check ──────────────────────
-  // r = random [0,1). For each aura sorted rarest→most common:
-  //   threshold = effLuck * multipliers / aura.chance
-  //   If r < threshold → pick this aura (rarer auras are harder but scale with luck)
-  //   Higher luck → thresholds shift upward → rarer auras become reachable
-  //   Lower-than-luck auras naturally become unreachable as thresholds exceed 1.0
-  // Sort auras from rarest to most common once per roll
-  const aurasRarestFirst = [...AURAS].sort((a,b)=>b[1]-a[1]);
-  const r = rnd();
-  let picked = null;
-  for(let i=0;i<aurasRarestFirst.length;i++){
-    const a=aurasRarestFirst[i];
-    // Skip biome-exclusive auras that don't match current biome
-    if(a[4]&&a[4]!==biome.name) continue;
-    // Calculate threshold: higher luck → higher threshold → more likely to pick
-    let mult=1;
-    if(a[4]&&a[4]===biome.name) mult*=biomeMult;
-    if(a[0]==="Solar"&&S.isDay) mult*=10;
-    if(a[0]==="Lunar"&&!S.isDay) mult*=10;
-    const threshold=(effLuck*mult)/a[1];
-    if(r<threshold){picked=a;break;}
-  }
-  // Fallback to most common aura if nothing matched (very low luck scenarios)
-  if(!picked){
-    picked=AURAS.filter(a=>!a[4]||a[4]===biome.name)
-               .reduce((best,a)=>a[1]<best[1]?a:best,AURAS[0]);
-  }
+  const elig=AURAS.filter(a=>!a[4]||a[4]===biome.name);
+  const weights=elig.map(a=>{
+    const base=(effLuck/100)/a[1];
+    let w=(a[4]&&a[4]===biome.name)?base*biomeMult:base;
+    if(a[0]==="Solar"&&S.isDay) w*=10;
+    if(a[0]==="Lunar"&&!S.isDay) w*=10;
+    return w;
+  });
+  const total=weights.reduce((s,w)=>s+w,0);
+  let r=rnd()*total,picked=elig[elig.length-1];
+  for(let i=0;i<elig.length;i++){r-=weights[i];if(r<=0){picked=elig[i];break;}}
 
 
   const [name,chance,col,glow,_]=picked;
