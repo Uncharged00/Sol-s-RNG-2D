@@ -28,9 +28,17 @@ function doRoll(){
 
   // ── ROLL SYSTEM: weighted random pick (wiki formula) ─────────────────────
   // weight = (effLuck/100) / baseRarity  → chance = luck / rarity
-  // Higher luck lifts all weights; rarer auras stay proportionally rare
+  // Ultra-luck potions enforce a minimum rarity floor so commons are impossible
   const biomeMult=BIOMES[S.biomeIdx].mult;
-  const elig=AURAS.filter(a=>!a[4]||a[4]===biome.name);
+  // Determine min rarity floor from active ultra-luck potions
+  let minRarity=0;
+  S.active_potions.forEach(p=>{
+    if(!p.isRoll) return;
+    if(p.luck_add>=40000000) minRarity=Math.max(minRarity,1000000); // Godlike+ → Mythic+
+    else if(p.luck_add>=15000000) minRarity=Math.max(minRarity,100000); // Heavenly → Legendary+
+    else if(p.luck_add>=5000000) minRarity=Math.max(minRarity,10000);  // Bound → Unique+
+  });
+  const elig=AURAS.filter(a=>(!a[4]||a[4]===biome.name)&&a[1]>=minRarity);
   const weights=elig.map(a=>{
     const base=(effLuck/100)/a[1];
     let w=(a[4]&&a[4]===biome.name)?base*biomeMult:base;
