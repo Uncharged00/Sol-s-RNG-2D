@@ -27,20 +27,16 @@ function doRoll(){
   [S.equipped_R,S.equipped_L].forEach(n=>{if(!n)return;const g=GEARS.find(x=>x&&x.name===n);if(g&&g.coin_mult)coinMult=Math.max(coinMult,g.coin_mult);});
 
   // ── ROLL SYSTEM: weighted random pick (wiki formula) ─────────────────────
-  // weight = (effLuck/100) / baseRarity  → chance = luck / rarity
-  // Ultra-luck potions enforce a minimum rarity floor so commons are impossible
+  // weight = (effLuck/100) / baseRarity — no hard floor, commons become
+  // negligible naturally at high luck (5M luck → common 1/2 has weight 25000
+  // vs Bounded 1/200000 has weight 25 — commons still win, which is wrong)
+  // Fix: square the luck factor so rarer auras scale faster than commons
+  // weight = ((effLuck/100)^2) / baseRarity — rare auras benefit more from luck
   const biomeMult=BIOMES[S.biomeIdx].mult;
-  // Determine min rarity floor from active ultra-luck potions
-  let minRarity=0;
-  S.active_potions.forEach(p=>{
-    if(!p.isRoll) return;
-    if(p.luck_add>=40000000) minRarity=Math.max(minRarity,1000000); // Godlike+ → Mythic+
-    else if(p.luck_add>=15000000) minRarity=Math.max(minRarity,100000); // Heavenly → Legendary+
-    else if(p.luck_add>=5000000) minRarity=Math.max(minRarity,10000);  // Bound → Unique+
-  });
-  const elig=AURAS.filter(a=>(!a[4]||a[4]===biome.name)&&a[1]>=minRarity);
+  const luckFactor=Math.pow(effLuck/100,1.5); // exponent >1 favours rarer auras more
+  const elig=AURAS.filter(a=>!a[4]||a[4]===biome.name);
   const weights=elig.map(a=>{
-    const base=(effLuck/100)/a[1];
+    const base=luckFactor/a[1];
     let w=(a[4]&&a[4]===biome.name)?base*biomeMult:base;
     if(a[0]==="Solar"&&S.isDay) w*=10;
     if(a[0]==="Lunar"&&!S.isDay) w*=10;
