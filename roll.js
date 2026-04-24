@@ -26,25 +26,29 @@ function doRoll(){
   let coinMult=1;
   [S.equipped_R,S.equipped_L].forEach(n=>{if(!n)return;const g=GEARS.find(x=>x&&x.name===n);if(g&&g.coin_mult)coinMult=Math.max(coinMult,g.coin_mult);});
 
-  // ── ROLL SYSTEM: weighted random pick (wiki formula) ─────────────────────
-  // weight = (effLuck/100) / baseRarity — no hard floor, commons become
-  // negligible naturally at high luck (5M luck → common 1/2 has weight 25000
-  // vs Bounded 1/200000 has weight 25 — commons still win, which is wrong)
-  // Fix: square the luck factor so rarer auras scale faster than commons
-  // weight = ((effLuck/100)^2) / baseRarity — rare auras benefit more from luck
-  const biomeMult=BIOMES[S.biomeIdx].mult;
-  const luckFactor=Math.pow(effLuck/100,1.5); // exponent >1 favours rarer auras more
-  const elig=AURAS.filter(a=>!a[4]||a[4]===biome.name);
-  const weights=elig.map(a=>{
-    const base=luckFactor/a[1];
-    let w=(a[4]&&a[4]===biome.name)?base*biomeMult:base;
-    if(a[0]==="Solar"&&S.isDay) w*=10;
-    if(a[0]==="Lunar"&&!S.isDay) w*=10;
-    return w;
-  });
-  const total=weights.reduce((s,w)=>s+w,0);
-  let r=rnd()*total,picked=elig[elig.length-1];
-  for(let i=0;i<elig.length;i++){r-=weights[i];if(r<=0){picked=elig[i];break;}}
+  // ── ROLL SYSTEM ───────────────────────────────────────────────────────────
+  // Formula: effectiveChance = baseRarity / luckMultiplier
+  // Roll rnd()*effectiveChance — if < 1, that aura is won.
+  // Pick the RAREST aura won this roll. Commons can't win if rarer auras always win.
+  const biomeMult = BIOMES[S.biomeIdx].mult;
+  const luckMult  = effLuck / 100; // e.g. 315% luck → 3.15×
+
+  const elig = AURAS.filter(a => !a[4] || a[4] === biome.name)
+                    .sort((a, b) => b[1] - a[1]); // rarest first
+
+  let picked = null;
+  for(let i = 0; i < elig.length; i++){
+    const a = elig[i];
+    let m = 1;
+    if(a[4] && a[4] === biome.name) m *= biomeMult;
+    if(a[0] === "Solar" && S.isDay)  m *= 10;
+    if(a[0] === "Lunar" && !S.isDay) m *= 10;
+    const effectiveChance = a[1] / (luckMult * m);
+    if(rnd() * effectiveChance < 1){ picked = a; break; }
+  }
+  // Fallback: if nothing won (very low luck), pick most common eligible aura
+  if(!picked) picked = elig[elig.length - 1];
+
 
 
   const [name,chance,col,glow,_]=picked;
