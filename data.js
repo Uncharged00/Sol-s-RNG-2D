@@ -521,17 +521,8 @@ function calcLuck(){
     }
   }
   // Regular timed potions: additive
-  let mult=1;
-  S.active_potions.forEach(p=>{
-    if(!p.luck_add) return;
-    // One-roll ultra potions (Heavenly, Godlike, Oblivion, Bounded) multiply instead of add
-    if(p.isRoll && p.luck_add>=1000000){
-      mult*=(1+p.luck_add/100); // e.g. 15,000,000% = ×150,001 multiplier
-    } else {
-      base+=p.luck_add;
-    }
-  });
-  return Math.round(base*mult);
+  S.active_potions.forEach(p=>{ if(p.luck_add) base+=p.luck_add; });
+  return Math.round(base);
 }
 function calcSpeedBonus(){
   // Returns total speed reduction % (positive = faster)
