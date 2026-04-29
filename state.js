@@ -3,7 +3,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 let AC=null, masterGain=null;
-let musicEnabled=true;
+var musicEnabled=true;
 let activeThemeKey=null;
 // Each theme runner returns a "stop" function
 let stopCurrentTheme=null;
