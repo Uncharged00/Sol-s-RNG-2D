@@ -27,28 +27,23 @@ function doRoll(){
   [S.equipped_R,S.equipped_L].forEach(n=>{if(!n)return;const g=GEARS.find(x=>x&&x.name===n);if(g&&g.coin_mult)coinMult=Math.max(coinMult,g.coin_mult);});
 
   // ── ROLL SYSTEM ───────────────────────────────────────────────────────────
-  // Formula: effectiveChance = baseRarity / luckMultiplier
-  // Roll rnd()*effectiveChance — if < 1, that aura is won.
-  // Pick the RAREST aura won this roll. Commons can't win if rarer auras always win.
+  // threshold = (1 / baseRarity) * luckMult — iterate rarest→common, first hit wins
   const biomeMult = BIOMES[S.biomeIdx].mult;
-  const luckMult  = effLuck / 100; // e.g. 315% luck → 3.15×
+  const luckMult  = effLuck / 100;
 
   const elig = AURAS.filter(a => !a[4] || a[4] === biome.name)
                     .sort((a, b) => b[1] - a[1]); // rarest first
 
-  let picked = null;
+  let picked = elig[elig.length - 1]; // fallback: most common
   for(let i = 0; i < elig.length; i++){
     const a = elig[i];
     let m = 1;
     if(a[4] && a[4] === biome.name) m *= biomeMult;
     if(a[0] === "Solar" && S.isDay)  m *= 10;
     if(a[0] === "Lunar" && !S.isDay) m *= 10;
-    const effectiveChance = a[1] / (luckMult * m);
-    if(rnd() * effectiveChance < 1){ picked = a; break; }
+    const threshold = (1 / a[1]) * (luckMult * m);
+    if(rnd() <= threshold){ picked = a; break; }
   }
-  // Fallback: if nothing won (very low luck), pick most common eligible aura
-  if(!picked) picked = elig[elig.length - 1];
-
 
 
   const [name,chance,col,glow,_]=picked;
