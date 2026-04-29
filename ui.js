@@ -441,6 +441,24 @@ function renderCollTab(){
         "<span class='aura-count'>×"+count+"</span>"+
         "<button style='margin-top:6px;width:100%;padding:5px;background:"+(isEq?"rgba(255,80,80,0.15)":"rgba(60,200,60,0.15)")+";border:1px solid "+(isEq?"rgba(255,80,80,0.3)":"rgba(60,200,60,0.3)")+";border-radius:5px;color:"+(isEq?"#ff8080":"#60e880")+";font-family:inherit;font-size:10px;cursor:pointer;'>"+(isEq?"Remove":"Display")+"</button>";
       card.querySelector("button").onclick=(e)=>{e.stopPropagation();S.equipped_aura=isEq?null:name;save();updateEquippedBadge();updateMusic();if(!isEq){S.lastAura={name,chance:aura[1],col:aura[2],glow:aura[3],tier,isBonus:false};updateAuraDisplay();toast("✨ Displaying: "+name);}else toast("Aura removed");renderCollTab();};
+      // Delete button
+      const delBtn=document.createElement("button");
+      delBtn.style.cssText="margin-top:4px;width:100%;padding:5px;background:rgba(255,40,40,0.12);border:1px solid rgba(255,40,40,0.3);border-radius:5px;color:#ff6060;font-family:inherit;font-size:10px;cursor:pointer;";
+      delBtn.textContent="🗑 Delete";
+      delBtn.onclick=(e)=>{
+        e.stopPropagation();
+        const thresh=S.deleteWarnThreshold||50000;
+        const doDelete=()=>{
+          S.owned_auras[name]=(S.owned_auras[name]||1)-1;
+          if(S.owned_auras[name]<=0) delete S.owned_auras[name];
+          if(S.equipped_aura===name&&!(S.owned_auras[name]>0)){S.equipped_aura=null;updateEquippedBadge();}
+          save();toast("🗑 Deleted: "+name);renderCollTab();
+        };
+        if(aura[1]>=thresh){
+          if(confirm("⚠️ Delete "+name+" (1 in "+aura[1].toLocaleString()+")? This cannot be undone.")) doDelete();
+        } else { doDelete(); }
+      };
+      card.appendChild(delBtn);
       c.appendChild(card);
     });
   } else {
@@ -543,6 +561,28 @@ function openSettings(){
   chatSel.onchange=()=>{S.chatMinChance=parseInt(chatSel.value);save();};
   chatSection.appendChild(chatSel);
   c.appendChild(chatSection);
+
+  // Delete Warning Threshold
+  const dwSection=document.createElement("div");
+  dwSection.style.cssText="background:rgba(255,255,255,0.04);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.1);";
+  dwSection.innerHTML="<div style='font-size:10px;color:#888;letter-spacing:2px;margin-bottom:6px'>DELETE WARNING THRESHOLD</div><div style='font-size:10px;color:#555;margin-bottom:8px'>Warn before deleting auras rarer than this</div>";
+  const DW_OPTIONS=[
+    {label:"All auras (always warn)",val:1},
+    {label:"Uncommon+ (1/4+)",val:4},
+    {label:"Rare+ (1/16+)",val:16},
+    {label:"Topaz+ (1/150+)",val:150},
+    {label:"Aquatic+ (1/40k+)",val:40000},
+    {label:"Solar+ (1/50k+)",val:50000},
+    {label:"Bounded+ (1/200k+)",val:200000},
+    {label:"Legendary+ (1/1M+)",val:1000000},
+    {label:"Never warn",val:999999999999}
+  ];
+  const dwSel=document.createElement("select");
+  dwSel.style.cssText="width:100%;background:rgba(0,0,20,0.8);color:#ccc;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:6px;font-family:'Courier New',monospace;font-size:11px;";
+  DW_OPTIONS.forEach(opt=>{const o2=document.createElement("option");o2.value=opt.val;o2.textContent=opt.label;if((S.deleteWarnThreshold||50000)==opt.val)o2.selected=true;dwSel.appendChild(o2);});
+  dwSel.onchange=()=>{S.deleteWarnThreshold=parseInt(dwSel.value);save();};
+  dwSection.appendChild(dwSel);
+  c.appendChild(dwSection);
 
   // Account / Cloud Save
   const authSection=document.createElement("div");

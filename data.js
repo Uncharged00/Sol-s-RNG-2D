@@ -420,6 +420,7 @@ const S={
   // settings
   autoDelete:[],         // aura names to auto-delete
   autoEquip:null,        // aura name to auto-equip when rolled
+  deleteWarnThreshold:50000, // warn before deleting auras rarer than this
   // collection
   collection:{},         // aura name -> {count, unlocked}
 };
@@ -430,7 +431,7 @@ function save(){
     owned_items:S.owned_items||{},
     owned_gears:S.owned_gears,equipped_R:S.equipped_R,equipped_L:S.equipped_L,
     equipped_aura:S.equipped_aura,
-    autoDelete:S.autoDelete||[],autoEquip:S.autoEquip||null,
+    autoDelete:S.autoDelete||[],autoEquip:S.autoEquip||null,deleteWarnThreshold:S.deleteWarnThreshold||50000,
     collection:S.collection||{},
     owned_talismans:S.owned_talismans||[],
     equipped_talisman:S.equipped_talisman||null,
@@ -451,7 +452,7 @@ function load(){
         owned_items:d.owned_items||{},
         equipped_R:d.equipped_R||null,equipped_L:d.equipped_L||null,
         equipped_aura:d.equipped_aura||null,
-        autoDelete:d.autoDelete||[],autoEquip:d.autoEquip||null,
+        autoDelete:d.autoDelete||[],autoEquip:d.autoEquip||null,deleteWarnThreshold:d.deleteWarnThreshold||50000,
         collection:d.collection||{},
         owned_talismans:d.owned_talismans||[],
         equipped_talisman:d.equipped_talisman||null,
